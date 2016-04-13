@@ -1,3 +1,6 @@
 {
-  "extends": "artcom"
+  "extends": "artcom",
+  "rules": {
+    "func-names": "off"
+  }
 }
