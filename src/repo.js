@@ -26,6 +26,6 @@ async function getRepo(src, path) {
   try {
     return await git.Repository.open(path)
   } catch (error) {
-    return await git.Clone.clone(src, path, { bare: true })
+    return await git.Clone.clone(src, path, { bare: 1 })
   }
 }
