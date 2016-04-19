@@ -23,6 +23,6 @@
     "eslint-config-artcom": "^0.1.1",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
-    "gulp-watch": "^4.3.5"
+    "gulp-nodemon": "^2.0.6"
   }
 }

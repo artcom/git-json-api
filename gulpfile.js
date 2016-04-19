@@ -1,19 +1,21 @@
 const gulp = require("gulp")
 const babel = require("gulp-babel")
-const watch = require("gulp-watch")
+const nodemon = require("gulp-nodemon")
+const path = require("path")
 
-const SOURCES = "src/*.js"
-const DIST_DIR = "dist"
+const SOURCE_DIR = "./src"
+const DIST_DIR = "./dist"
 
-gulp.task("default", () =>
-  gulp.src(SOURCES)
+gulp.task("compile", () =>
+  gulp.src(path.join(SOURCE_DIR, "*.js"))
     .pipe(babel())
     .pipe(gulp.dest(DIST_DIR))
 )
 
-gulp.task("watch", () =>
-gulp.src(SOURCES)
-  .pipe(watch(SOURCES))
-  .pipe(babel())
-  .pipe(gulp.dest(DIST_DIR))
-)
+gulp.task("watch", ["compile"], () => {
+  nodemon({
+    script: path.join(DIST_DIR, "main.js"),
+    watch: SOURCE_DIR,
+    task: ["compile"]
+  })
+})
