@@ -3,9 +3,11 @@ import path from "path"
 
 import { usingRepo } from "./repo"
 
-export default new express.Router()
-  .get("/latest", usingRepo(getMaster))
-  .get("/config/:version", usingRepo(getConfig))
+export default function routes(repo) {
+  return new express.Router()
+    .get("/latest", usingRepo(repo, getMaster))
+    .get("/config/:version", usingRepo(repo, getConfig))
+}
 
 async function getMaster(repo, req, res) {
   const commit = await repo.getMasterCommit()
