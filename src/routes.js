@@ -20,7 +20,7 @@ async function getConfig(repo, req, res) {
     const data = await treeToObject(tree)
     res.json(data)
   } catch (error) {
-    res.status(404).end()
+    res.status(404).json({ error: error.message })
   }
 }
 
