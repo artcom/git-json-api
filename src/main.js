@@ -7,9 +7,10 @@ import routes from "./routes"
 
 const app = express()
 const log = bunyan.createLogger({ name: "git-json-api" })
+const port = process.env.PORT || 3000
 
 app.use("/", routes)
 
-app.listen(process.env.PORT || 3000, () => {
-  log.info("git-json-api up and running")
+app.listen(port, () => {
+  log.info({ port }, "git-json-api up and running")
 })
