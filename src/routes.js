@@ -1,4 +1,5 @@
 import express from "express"
+import JSON5 from "json5"
 import path from "path"
 
 import { usingRepo } from "./repo"
@@ -43,6 +44,6 @@ async function entryToObject(entry) {
     return treeToObject(subTree)
   } else if (entry.isBlob()) {
     const blob = await entry.getBlob()
-    return blob.toString()
+    return JSON5.parse(blob.content())
   }
 }
