@@ -6,16 +6,16 @@ import { usingRepo } from "./repo"
 
 export default function routes(repo) {
   return new express.Router()
-    .get("/latest", usingRepo(repo, getMaster))
-    .get("/config/:version", usingRepo(repo, getConfig))
+    .get("/latest", usingRepo(repo, getLatestVersion))
+    .get("/json/:version", usingRepo(repo, getJson))
 }
 
-async function getMaster(repo, req, res) {
+async function getLatestVersion(repo, req, res) {
   const commit = await repo.getMasterCommit()
   res.json({ version: commit.sha() })
 }
 
-async function getConfig(repo, req, res) {
+async function getJson(repo, req, res) {
   try {
     const version = req.params.version
     const commit = await repo.getCommit(version)
