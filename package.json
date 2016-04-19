@@ -3,7 +3,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "gulp && node dist/main.js"
+    "start": "gulp compile && node dist/main.js"
   },
   "engines": {
     "node": "5.x.x"
