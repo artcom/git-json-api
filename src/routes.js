@@ -11,7 +11,7 @@ export default function routes(repo) {
 }
 
 async function getLatestVersion(repo, req, res) {
-  const commit = await repo.getMasterCommit()
+  const commit = await repo.getReferenceCommit("refs/remotes/origin/master")
   res.json({ version: commit.sha() })
 }
 
