@@ -1,6 +1,7 @@
 import "babel-polyfill"
 
 import bunyan from "bunyan"
+import cors from "cors"
 import express from "express"
 
 import routes from "./routes"
@@ -15,6 +16,7 @@ if (!repo) {
   process.exit(1)
 }
 
+app.use(cors())
 app.use("/", routes(repo))
 
 app.listen(port, () => {
