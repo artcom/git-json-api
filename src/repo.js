@@ -14,7 +14,7 @@ export function usingRepo(url, callback) {
       repoLock.unlock()
     } catch (error) {
       repoLock.unlock()
-      throw error
+      res.status(501).json({ error: error.message })
     }
   }
 }
