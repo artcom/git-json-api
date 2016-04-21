@@ -7,7 +7,8 @@ import { usingRepo } from "./repo"
 export default function routes(repo) {
   return new express.Router()
     .get("/latest", usingRepo(repo, getLatestVersion))
-    .get("/json/:version", usingRepo(repo, getJson))
+    .get("/:version", usingRepo(repo, getRoot))
+    .get("/:version/*", usingRepo(repo, getPath))
 }
 
 async function getLatestVersion(repo, req, res) {
@@ -15,12 +16,28 @@ async function getLatestVersion(repo, req, res) {
   res.json({ version: commit.sha() })
 }
 
-async function getJson(repo, req, res) {
+async function getRoot(repo, req, res) {
+  const version = req.params.version
+
   try {
-    const version = req.params.version
     const commit = await repo.getCommit(version)
     const tree = await commit.getTree()
     const data = await treeToObject(tree)
+    res.json(data)
+  } catch (error) {
+    res.status(404).json({ error: error.message })
+  }
+}
+
+async function getPath(repo, req, res) {
+  const version = req.params.version
+  const path = req.params[0]
+
+  try {
+    const commit = await repo.getCommit(version)
+    const tree = await commit.getTree()
+    const entry = await tree.getEntry(path)
+    const data = await entryToObject(entry)
     res.json(data)
   } catch (error) {
     res.status(404).json({ error: error.message })
