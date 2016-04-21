@@ -17,11 +17,11 @@ gulp.task("compile", () =>
     .pipe(gulp.dest(DIST_DIR))
 )
 
-gulp.task("watch", ["compile"], () => {
+gulp.task("watch", ["compile"], () =>
   nodemon({
     script: path.join(DIST_DIR, "main.js"),
     watch: SOURCE_DIR,
-    task: ["compile"],
+    tasks: ["compile"],
     stdout: false
   }).on("readable", function () {
     if (bunyan) {
@@ -39,4 +39,4 @@ gulp.task("watch", ["compile"], () => {
     this.stdout.pipe(bunyan.stdin)
     this.stderr.pipe(bunyan.stdin)
   })
-})
+)
