@@ -16,7 +16,7 @@ Returns the latest version of the data in the repo (i.e. the latest commit on th
 }
 ```
 
-### `/json/:version`
+### `/:version`
 
 Returns the contents of the repo as a single JSON object. The object contains the contents of every file in the root of the repo in a property named like the file (without extension). For every directory, it contains another object with the same structure.
 
@@ -43,6 +43,16 @@ If a repo contains `file1.json`, `file2.json`, `directory/fileA.json` and `direc
     "item2",
     "item3"
   ]
+}
+```
+
+### `/:version/path/in/repo`
+
+Optionally, the previous route can be called with an additional path to a file or directory in the repo to retrieve an excerpt of the data. In the above example, `/:version/directory/fileA` would return:
+
+```json
+{
+  "foo": "bar"
 }
 ```
 
