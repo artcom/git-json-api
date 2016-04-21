@@ -1,8 +1,11 @@
 import express from "express"
 import JSON5 from "json5"
+import minimatch from "minimatch"
 import path from "path"
 
 import { usingRepo } from "./repo"
+
+const SCHEMA_PATH = "schema.json"
 
 export default function routes(repo) {
   return new express.Router()
@@ -36,7 +39,8 @@ async function getPath(repo, req, res) {
   try {
     const commit = await repo.getCommit(version)
     const tree = await commit.getTree()
-    const entry = await tree.getEntry(path)
+    const schema = await getSchema(tree)
+    const entry = await tree.getEntry(isFile(path, schema.files) ? `${path}.json` : path)
     const data = await entryToObject(entry)
     res.json(data)
   } catch (error) {
@@ -44,12 +48,24 @@ async function getPath(repo, req, res) {
   }
 }
 
+async function getSchema(tree) {
+  const entry = await tree.getEntry(SCHEMA_PATH)
+  const blob = await entry.getBlob()
+  return JSON5.parse(blob.content())
+}
+
+function isFile(path, files) {
+  return files.some((glob) => minimatch(path, glob))
+}
+
 async function treeToObject(tree) {
   const result = {}
 
   for (const entry of tree.entries()) {
-    const key = path.basename(entry.path(), ".json")
-    result[key] = await entryToObject(entry)
+    if (entry.path() !== SCHEMA_PATH) {
+      const key = path.basename(entry.path(), ".json")
+      result[key] = await entryToObject(entry)
+    }
   }
 
   return result
