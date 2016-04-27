@@ -128,7 +128,7 @@ async function objectToTree(object, path, repo, schema) {
       continue;
     }
 
-    const childPath = path + "/" + key
+    const childPath = `${path}/${key}`
     if (isFile(childPath, schema.files)) {
       const filename = `${key}.json`
       const buffer = new Buffer(`${JSON.stringify(object[key], null, 2)}\n`)
@@ -140,11 +140,8 @@ async function objectToTree(object, path, repo, schema) {
       }
     } else {
       try {
-        const dirname = key
-
-        console.log(dirname)
         const subTreeOid = await objectToTree(object[key], childPath, repo, schema)
-        await treeBuilder.insert(dirname, subTreeOid, TreeEntry.FILEMODE.TREE)
+        await treeBuilder.insert(key, subTreeOid, TreeEntry.FILEMODE.TREE)
       } catch (e) {
         console.log(e)
       }
