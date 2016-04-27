@@ -14,7 +14,7 @@ export default function routes(repo) {
     .get("/latest", usingRepo(repo, getLatestVersion))
     .get("/:version", usingRepo(repo, getRoot))
     .get("/:version/*", usingRepo(repo, getPath))
-    .post("/:version", bodyParser.json(), usingRepo(repo, postConfiguration))
+    .post("/:version/*", bodyParser.json(), usingRepo(repo, updatePath))
 }
 
 async function getLatestVersion(repo, req, res) {
@@ -51,7 +51,8 @@ async function getPath(repo, req, res) {
   }
 }
 
-async function postConfiguration(repo, req, res) {
+async function updatePath(repo, req, res) {
+  const path = req.params[0]
   const data = req.body
   const version = req.params.version
 
@@ -59,11 +60,11 @@ async function postConfiguration(repo, req, res) {
     const commit = await repo.getCommit(version)
     const tree = await commit.getTree()
     const schema = await getSchema(tree)
-    const tourConfigurationsOid = await objectToTree(data, "tourConfigurations", repo, schema)
+    const changedTreeOid = await objectToTree(data, path, repo, schema)
 
     const treeBuilder = await Treebuilder.create(repo, tree)
-    await treeBuilder.remove("tourConfigurations")
-    await treeBuilder.insert("tourConfigurations", tourConfigurationsOid, TreeEntry.FILEMODE.TREE)
+    await treeBuilder.remove(path)
+    await treeBuilder.insert(path, changedTreeOid, TreeEntry.FILEMODE.TREE)
     const treeOid = treeBuilder.write()
 
     const newTree = await Tree.lookup(repo, treeOid)
@@ -73,7 +74,7 @@ async function postConfiguration(repo, req, res) {
         "refs/heads/master",
         repo.defaultSignature(),
         repo.defaultSignature(),
-        "Update tour configuration",
+        `Update ${path}`,
         treeOid,
         [commit]
       )
