@@ -1,6 +1,8 @@
+import bodyParser from "body-parser"
 import express from "express"
 import JSON5 from "json5"
 import minimatch from "minimatch"
+import { Blob, Diff, Treebuilder, Tree, TreeEntry } from "nodegit"
 import path from "path"
 
 import { usingRepo } from "./repo"
@@ -12,6 +14,7 @@ export default function routes(repo) {
     .get("/latest", usingRepo(repo, getLatestVersion))
     .get("/:version", usingRepo(repo, getRoot))
     .get("/:version/*", usingRepo(repo, getPath))
+    .post("/:version", bodyParser.json(), usingRepo(repo, postConfiguration))
 }
 
 async function getLatestVersion(repo, req, res) {
@@ -48,14 +51,44 @@ async function getPath(repo, req, res) {
   }
 }
 
-async function getSchema(tree) {
-  const entry = await tree.getEntry(SCHEMA_PATH)
-  const blob = await entry.getBlob()
-  return JSON5.parse(blob.content())
-}
+async function postConfiguration(repo, req, res) {
+  const data = req.body
+  const version = req.params.version
 
-function isFile(path, files) {
-  return files.some((glob) => minimatch(path, glob))
+  try {
+    const commit = await repo.getCommit(version)
+    const tree = await commit.getTree()
+    const schema = await getSchema(tree)
+    const tourConfigurationsOid = await objectToTree(data, "tourConfigurations", repo, schema)
+
+    const treeBuilder = await Treebuilder.create(repo, tree)
+    await treeBuilder.remove("tourConfigurations")
+    await treeBuilder.insert("tourConfigurations", tourConfigurationsOid, TreeEntry.FILEMODE.TREE)
+    const treeOid = treeBuilder.write()
+
+    const newTree = await Tree.lookup(repo, treeOid)
+    const diff = await Diff.treeToTree(repo, tree, newTree)
+    if (diff.numDeltas() > 0) {
+      await repo.createCommit(
+        "refs/heads/master",
+        repo.defaultSignature(),
+        repo.defaultSignature(),
+        "Update tour configuration",
+        treeOid,
+        [commit]
+      )
+
+      const remote = await repo.getRemote("origin")
+      await remote.push("refs/heads/master:refs/heads/master")
+    } else {
+      console.log("Nothing changed")
+    }
+
+    res.end()
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ error: error.message })
+  }
 }
 
 async function treeToObject(tree) {
@@ -79,4 +112,48 @@ async function entryToObject(entry) {
     const blob = await entry.getBlob()
     return JSON5.parse(blob.content())
   }
+}
+
+async function getSchema(tree) {
+  const entry = await tree.getEntry(SCHEMA_PATH)
+  const blob = await entry.getBlob()
+  return JSON5.parse(blob.content())
+}
+
+async function objectToTree(object, path, repo, schema) {
+  const treeBuilder = await Treebuilder.create(repo, null)
+  
+  for (let key in object) {
+    if (!object.hasOwnProperty(key)) {
+      continue;
+    }
+
+    const childPath = path + "/" + key
+    if (isFile(childPath, schema.files)) {
+      const filename = `${key}.json`
+      const buffer = new Buffer(`${JSON.stringify(object[key], null, 2)}\n`)
+      const blobOid = Blob.createFromBuffer(repo, buffer, buffer.length)
+      try {
+        await treeBuilder.insert(filename, blobOid, TreeEntry.FILEMODE.BLOB)
+      } catch (e) {
+        console.log(e)
+      }
+    } else {
+      try {
+        const dirname = key
+
+        console.log(dirname)
+        const subTreeOid = await objectToTree(object[key], childPath, repo, schema)
+        await treeBuilder.insert(dirname, subTreeOid, TreeEntry.FILEMODE.TREE)
+      } catch (e) {
+        console.log(e)
+      }
+    }
+  }
+
+  return await treeBuilder.write()
+}
+
+function isFile(path, files) {
+  return files.some((glob) => minimatch(path, glob))
 }
