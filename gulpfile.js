@@ -12,7 +12,7 @@ const DIST_DIR = "./dist"
 let bunyan = null
 
 gulp.task("compile", () =>
-  gulp.src(path.join(SOURCE_DIR, "*.js"))
+  gulp.src(path.join(SOURCE_DIR, "**/*.js"))
     .pipe(babel())
     .pipe(gulp.dest(DIST_DIR))
 )
