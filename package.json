@@ -28,6 +28,7 @@
     "eslint-plugin-import": "^1.5.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
-    "gulp-nodemon": "^2.0.6"
+    "gulp-nodemon": "^2.0.6",
+    "gulp-sourcemaps": "^1.6.0"
   }
 }
