@@ -1,4 +1,3 @@
-import bodyParser from "body-parser"
 import express from "express"
 import JSON5 from "json5"
 import minimatch from "minimatch"
@@ -14,7 +13,7 @@ export default function routes(repo) {
     .get("/latest", usingRepo(repo, getLatestVersion))
     .get("/:version", usingRepo(repo, getRoot))
     .get("/:version/*", usingRepo(repo, getPath))
-    .post("/:version/*", bodyParser.json(), usingRepo(repo, updatePath))
+    .post("/:version/*", usingRepo(repo, updatePath))
 }
 
 async function getLatestVersion(repo, req, res) {
