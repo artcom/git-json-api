@@ -123,10 +123,10 @@ async function getSchema(tree) {
 
 async function objectToTree(object, path, repo, schema) {
   const treeBuilder = await Treebuilder.create(repo, null)
-  
-  for (let key in object) {
+
+  for (const key of Object.keys(object)) {
     if (!object.hasOwnProperty(key)) {
-      continue;
+      continue
     }
 
     const childPath = `${path}/${key}`
