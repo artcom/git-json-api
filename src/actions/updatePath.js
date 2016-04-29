@@ -49,7 +49,7 @@ export async function objectToTree(object, path, repo, schema) {
     if (isFile(childPath, schema.files)) {
       const filename = `${key}.json`
       const buffer = new Buffer(`${JSON.stringify(object[key], null, 2)}\n`)
-      const blobOid = Blob.createFromBuffer(repo, buffer, buffer.length)
+      const blobOid = Git.Blob.createFromBuffer(repo, buffer, buffer.length)
       try {
         await builder.insert(filename, blobOid, Git.TreeEntry.FILEMODE.BLOB)
       } catch (e) {
