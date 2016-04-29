@@ -1,5 +1,3 @@
-import "babel-polyfill"
-
 import bodyParser from "body-parser"
 import bunyan from "bunyan"
 import cors from "cors"
