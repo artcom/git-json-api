@@ -9,22 +9,23 @@ export default async function updatePath(repo, params, data) {
   const commit = await repo.getCommit(version)
   const tree = await commit.getTree()
   const schema = await getSchema(tree)
-  const changedTreeOid = await objectToTree(data, path, repo, schema)
+  const newSubTreeOid = await objectToTree(data, path, repo, schema)
 
   const builder = await Git.Treebuilder.create(repo, tree)
   await builder.remove(path)
-  await builder.insert(path, changedTreeOid, Git.TreeEntry.FILEMODE.TREE)
-  const treeOid = builder.write()
+  await builder.insert(path, newSubTreeOid, Git.TreeEntry.FILEMODE.TREE)
+  const newTreeOid = builder.write()
 
-  const newTree = await Git.Tree.lookup(repo, treeOid)
+  const newTree = await Git.Tree.lookup(repo, newTreeOid)
   const diff = await Git.Diff.treeToTree(repo, tree, newTree)
+
   if (diff.numDeltas() > 0) {
     await repo.createCommit(
       "refs/heads/master",
       repo.defaultSignature(),
       repo.defaultSignature(),
       `Update ${path}`,
-      treeOid,
+      newTreeOid,
       [commit]
     )
 
