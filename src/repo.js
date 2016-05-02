@@ -4,17 +4,20 @@ import Lock from "./lock"
 
 const repoLock = new Lock()
 
-export function usingRepo(url, callback) {
+export function repoHandler(url, callback) {
   return async function(req, res) {
     await repoLock.lock()
     try {
       const repo = await getRepo(url, "./.repo")
       await repo.fetch("origin")
-      await callback(repo, req, res)
+      const result = await callback(repo, req.params, req.body)
+
       repoLock.unlock()
+      res.json(result)
     } catch (error) {
       repoLock.unlock()
-      res.status(500).json({ error: error.message })
+      console.log("Error:" + error.message)
+      res.status(404).json({ error: error.message })
     }
   }
 }

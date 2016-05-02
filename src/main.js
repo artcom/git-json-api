@@ -1,5 +1,4 @@
-import "babel-polyfill"
-
+import bodyParser from "body-parser"
 import bunyan from "bunyan"
 import cors from "cors"
 import express from "express"
@@ -16,6 +15,7 @@ if (!repo) {
   process.exit(1)
 }
 
+app.use(bodyParser.json())
 app.use(cors())
 app.use("/", routes(repo))
 
