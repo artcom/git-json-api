@@ -16,7 +16,6 @@ export function repoHandler(url, callback) {
       res.json(result)
     } catch (error) {
       repoLock.unlock()
-      console.log("Error:" + error.message)
       res.status(404).json({ error: error.message })
     }
   }
