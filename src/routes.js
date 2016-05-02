@@ -2,7 +2,7 @@ import bodyParser from "body-parser"
 import express from "express"
 import JSON5 from "json5"
 import minimatch from "minimatch"
-import { Blob, Diff, Treebuilder, Tree, TreeEntry } from "nodegit"
+import { Blob, Commit, Diff, Treebuilder, Tree, TreeEntry } from "nodegit"
 import path from "path"
 
 import { usingRepo } from "./repo"
@@ -57,8 +57,8 @@ async function updatePath(repo, req, res) {
   const version = req.params.version
 
   try {
-    const commit = await repo.getCommit(version)
-    const tree = await commit.getTree()
+    const parent = await repo.getCommit(version)
+    const tree = await parent.getTree()
     const schema = await getSchema(tree)
     const changedTreeOid = await objectToTree(data, path, repo, schema)
 
@@ -70,22 +70,28 @@ async function updatePath(repo, req, res) {
     const newTree = await Tree.lookup(repo, treeOid)
     const diff = await Diff.treeToTree(repo, tree, newTree)
     if (diff.numDeltas() > 0) {
-      await repo.createCommit(
+      const commitOid = await repo.createCommit(
         "refs/heads/master",
         repo.defaultSignature(),
         repo.defaultSignature(),
         `Update ${path}`,
         treeOid,
-        [commit]
+        [parent]
       )
 
       const remote = await repo.getRemote("origin")
-      await remote.push("refs/heads/master:refs/heads/master")
+      const errorCode = await remote.push("refs/heads/master:refs/heads/master")
+
+      if (errorCode) {
+        res.status(404).json({ error: errorCode })
+      } else {
+        const commit = await Commit.lookup(repo, commitOid)
+        res.json({ version: commit.sha() })
+      }
     } else {
       console.log("Nothing changed")
+      res.end()
     }
-
-    res.end()
   } catch (error) {
     console.log(error)
     res.status(404).json({ error: error.message })
