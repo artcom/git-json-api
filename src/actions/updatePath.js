@@ -4,12 +4,12 @@ import { getSchema, isFile } from "./helpers"
 
 export default async function updatePath(repo, params, data) {
   const version = params.version
-  console.log("Changed :" + version)
+  console.log(`Changed: ${version}`)
 
   const path = params[0]
 
   const masterCommit = await repo.getMasterCommit()
-  console.log("Master version: " + masterCommit)
+  console.log(`Master version: ${masterCommit}`)
 
   const masterTree = await masterCommit.getTree()
   const schema = await getSchema(masterTree)
