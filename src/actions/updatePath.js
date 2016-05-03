@@ -29,7 +29,7 @@ export default async function updatePath(repo, params, data) {
       repo, ancestorTree, newTree, masterTree, new Git.MergeOptions()
     )
     if (index.hasConflicts()) {
-      console.log("Index has conflicts") // todo: return error response
+      console.log("Index has conflicts")
       throw new Error("Index has conflicts")
     } else {
       console.log("Write merged tree")
