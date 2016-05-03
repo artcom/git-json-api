@@ -4,20 +4,45 @@ import { getSchema, isFile } from "./helpers"
 
 export default async function updatePath(repo, params, data) {
   const version = params.version
+  console.log("Changed :" + version)
+
   const path = params[0]
 
-  const parent = await repo.getCommit(version)
-  const tree = await parent.getTree()
-  const schema = await getSchema(tree)
+  const masterCommit = await repo.getMasterCommit()
+  console.log("Master version: " + masterCommit)
+
+  const masterTree = await masterCommit.getTree()
+  const schema = await getSchema(masterTree)
   const newSubTreeOid = await objectToTree(data, path, repo, schema)
 
-  const builder = await Git.Treebuilder.create(repo, tree)
+  const builder = await Git.Treebuilder.create(repo, masterTree)
   await builder.remove(path)
   await builder.insert(path, newSubTreeOid, Git.TreeEntry.FILEMODE.TREE)
   const newTreeOid = builder.write()
-
   const newTree = await Git.Tree.lookup(repo, newTreeOid)
-  const diff = await Git.Diff.treeToTree(repo, tree, newTree)
+
+  let diff
+  if (masterCommit.sha() !== version) {
+    const ancestorCommit = await repo.getCommit(version)
+    const ancestorTree = await ancestorCommit.getTree()
+    const index = await Git.Merge.trees(
+      repo, ancestorTree, newTree, masterTree, new Git.MergeOptions()
+    )
+    if (index.hasConflicts()) {
+      console.log("Index has conflicts") // todo: return error response
+      throw new Error("Index has conflicts")
+    } else {
+      console.log("Write merged tree")
+      const mergedTreeOid = await index.writeTreeTo(repo)
+      console.log("Get merged tree")
+      const mergedTree = await Git.Tree.lookup(repo, mergedTreeOid)
+      console.log("Diff trees")
+      diff = await Git.Diff.treeToTree(repo, masterTree, mergedTree)
+    }
+  } else {
+    diff = await Git.Diff.treeToTree(repo, masterTree, newTree)
+  }
+
 
   if (diff.numDeltas() > 0) {
     const commitOid = await repo.createCommit(
@@ -26,12 +51,14 @@ export default async function updatePath(repo, params, data) {
       repo.defaultSignature(),
       `Update ${path}`,
       newTreeOid,
-      [parent]
+      [masterCommit]
     )
 
     const remote = await repo.getRemote("origin")
     const errorCode = await remote.push("refs/heads/master:refs/heads/master")
+
     if (errorCode) {
+      console.log(errorCode)
       throw new Error(errorCode)
     } else {
       const commit = await Git.Commit.lookup(repo, commitOid)
