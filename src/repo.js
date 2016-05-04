@@ -8,18 +8,22 @@ export function repoHandler(url, callback) {
   return async function(req, res) {
     await repoLock.lock()
     try {
-      const repo = await getRepo(url, "./.repo")
-      await repo.fetch("origin")
+      const repo = await fetchRepo(url, "./.repo")
       const result = await callback(repo, req.params, req.body)
 
       repoLock.unlock()
       res.json(result)
     } catch (error) {
       repoLock.unlock()
-      console.trace(error.message)
       res.status(500).json({ error: error.message })
     }
   }
+}
+
+export async function fetchRepo(src, path) {
+  const repo = await getRepo(src, path)
+  await repo.fetch("origin")
+  return repo
 }
 
 async function getRepo(src, path) {
