@@ -1,9 +1,9 @@
 {
   "name": "git-json-api",
   "private": true,
-  "main": "index.js",
   "scripts": {
-    "start": "gulp compile && node dist/main.js"
+    "start": "gulp compile && node dist/main.js",
+    "test": "mocha --compilers js:babel-register"
   },
   "engines": {
     "node": "6.x.x"
@@ -22,12 +22,16 @@
     "babel-plugin-syntax-async-functions": "^6.5.0",
     "babel-plugin-transform-async-to-generator": "^6.7.4",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.7.7",
+    "babel-register": "^6.8.0",
+    "chai": "^3.5.0",
     "eslint": "^2.8.0",
     "eslint-config-artcom": "^0.2.0",
     "eslint-plugin-import": "^1.5.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-nodemon": "^2.0.6",
-    "gulp-sourcemaps": "^1.6.0"
+    "gulp-sourcemaps": "^1.6.0",
+    "mocha": "^2.4.5",
+    "tmp": "0.0.28"
   }
 }
