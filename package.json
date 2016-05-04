@@ -6,7 +6,7 @@
     "start": "gulp compile && node dist/main.js"
   },
   "engines": {
-    "node": "5.x.x"
+    "node": "6.x.x"
   },
   "dependencies": {
     "body-parser": "^1.15.0",
