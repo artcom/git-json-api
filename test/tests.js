@@ -27,7 +27,7 @@ const fileA1 = {
 const fileBx = ["one", "two", "three"]
 
 describe("Git JSON API", function() {
-  beforeEach(function() {
+  beforeEach(async function() {
     const repoDir = tmp.dirSync({ unsafeCleanup: true }).name
     const upstreamDir = tmp.dirSync({ unsafeCleanup: true }).name
     const cloneDir = tmp.dirSync({ unsafeCleanup: true }).name
@@ -57,70 +57,68 @@ describe("Git JSON API", function() {
 
     git("push", "origin", "master")
 
-    return fetchRepo(upstreamDir, cloneDir).then((repo) => { this.repo = repo })
+    this.repo = await fetchRepo(upstreamDir, cloneDir)
   })
 
   describe("getLatestVersion", function() {
-    it("returns the latest version", function() {
-      return getLatestVersion(this.repo).then((result) => {
-        expect(result).to.have.property("version", last(this.versions))
-      })
+    it("returns the latest version", async function() {
+      const result = await getLatestVersion(this.repo)
+      expect(result).to.have.property("version", last(this.versions))
     })
   })
 
   describe("getRoot", function() {
-    it("returns complete JSON data for latest version", function() {
-      return getRoot(this.repo, { version: last(this.versions) }).then((data) => {
-        expect(data).to.deep.equal({
-          dirA: {
-            file1: fileA1
-          },
-          dirB: {
-            x: {
-              file: fileBx
-            }
+    it("returns complete JSON data for latest version", async function() {
+      const data = await getRoot(this.repo, { version: last(this.versions) })
+
+      expect(data).to.deep.equal({
+        dirA: {
+          file1: fileA1
+        },
+        dirB: {
+          x: {
+            file: fileBx
           }
-        })
+        }
       })
     })
 
-    it("returns complete JSON data for older version", function() {
-      return getRoot(this.repo, { version: this.versions[1] }).then((data) => {
-        expect(data).to.deep.equal({
-          dirA: {
-            file1: fileA1
-          }
-        })
+    it("returns complete JSON data for older version", async function() {
+      const data = await getRoot(this.repo, { version: this.versions[1] })
+
+      expect(data).to.deep.equal({
+        dirA: {
+          file1: fileA1
+        }
       })
     })
   })
 
   describe("getPath", function() {
-    it("returns content of a directory", function() {
-      return getPath(this.repo, { version: last(this.versions), 0: "dirA" }).then((data) => {
-        expect(data).to.deep.equal({
-          file1: fileA1
-        })
+    it("returns content of a directory", async function() {
+      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirA" })
+
+      expect(data).to.deep.equal({
+        file1: fileA1
       })
     })
 
-    it("returns content of a nested directory", function() {
-      return getPath(this.repo, { version: last(this.versions), 0: "dirB/x" }).then((data) => {
-        expect(data).to.deep.equal({
-          file: fileBx
-        })
+    it("returns content of a nested directory", async function() {
+      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirB/x" })
+
+      expect(data).to.deep.equal({
+        file: fileBx
       })
     })
 
-    it("returns content of a file", function() {
-      return getPath(this.repo, { version: last(this.versions), 0: "dirB/x/file" }).then((data) => {
-        expect(data).to.deep.equal(fileBx)
-      })
+    it("returns content of a file", async function() {
+      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirB/x/file" })
+      expect(data).to.deep.equal(fileBx)
     })
   })
 
   describe("updatePath", function() {
-    it("writes changes to a file", function() {
+    it("writes changes to a file", async function() {
       const params = { version: last(this.versions), 0: "dirA" }
       const body = {
         file1: {
@@ -129,13 +127,11 @@ describe("Git JSON API", function() {
         }
       }
 
-      return updatePath(this.repo, params, body).then((result) => {
-        expect(result).to.have.property("version")
+      const result = await updatePath(this.repo, params, body)
+      expect(result).to.have.property("version")
 
-        return getPath(this.repo, { version: result.version, 0: "dirA" }).then((data) => {
-          expect(data).to.deep.equal(body)
-        })
-      })
+      const data = await getPath(this.repo, { version: result.version, 0: "dirA" })
+      expect(data).to.deep.equal(body)
     })
   })
 })
