@@ -7,27 +7,19 @@ export default async function updatePath(repo, params, data) {
   const version = params.version
   const path = params[0]
 
+  const latest = await getLatestVersion(repo)
+  const masterCommit = await repo.getCommit(latest.version)
   const parentCommit = await repo.getCommit(version)
+
   const parentTree = await parentCommit.getTree()
-
-  const schema = await getSchema(parentTree)
-  const newSubTreeOid = await objectToTree(data, path, repo, schema)
-
-  const builder = await Git.Treebuilder.create(repo, parentTree)
-  await builder.remove(path)
-  await builder.insert(path, newSubTreeOid, Git.TreeEntry.FILEMODE.TREE)
-  const newTreeOid = builder.write()
-  const newTree = await Git.Tree.lookup(repo, newTreeOid)
+  const newTree = await createNewTree(repo, parentTree, data, path)
 
   const diff = await Git.Diff.treeToTree(repo, parentTree, newTree)
   if (diff.numDeltas() === 0) {
     return { version }
   }
 
-  const latest = await getLatestVersion(repo)
-  const masterCommit = await repo.getCommit(latest.version)
-
-  const newOid = await createCommit(repo, parentCommit, masterCommit, newTreeOid, `Update ${path}`)
+  const newOid = await createCommit(repo, parentCommit, masterCommit, newTree, `Update ${path}`)
 
   const remote = await repo.getRemote("origin")
   const errorCode = await remote.push("refs/heads/master:refs/heads/master")
@@ -39,7 +31,18 @@ export default async function updatePath(repo, params, data) {
   return { version: newOid.toString() }
 }
 
-async function createCommit(repo, parentCommit, masterCommit, newTreeOid, message) {
+async function createNewTree(repo, parentTree, data, path) {
+  const schema = await getSchema(parentTree)
+  const newSubTreeOid = await objectToTree(data, path, repo, schema)
+
+  const builder = await Git.Treebuilder.create(repo, parentTree)
+  await builder.remove(path)
+  await builder.insert(path, newSubTreeOid, Git.TreeEntry.FILEMODE.TREE)
+  const newTreeOid = builder.write()
+  return await Git.Tree.lookup(repo, newTreeOid)
+}
+
+async function createCommit(repo, parentCommit, masterCommit, tree, message) {
   const signature = createSignature()
 
   if (parentCommit.sha() === masterCommit.sha()) {
@@ -48,7 +51,7 @@ async function createCommit(repo, parentCommit, masterCommit, newTreeOid, messag
       signature,
       signature,
       message,
-      newTreeOid,
+      tree.id(),
       [parentCommit]
     )
   } else {
@@ -57,7 +60,7 @@ async function createCommit(repo, parentCommit, masterCommit, newTreeOid, messag
       signature,
       signature,
       message,
-      newTreeOid,
+      tree.id(),
       [parentCommit]
     )
 
