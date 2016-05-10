@@ -28,9 +28,16 @@ const fileBx = ["one", "two", "three"]
 describe("Git JSON API", function() {
   beforeEach(function() {
     const repoDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const upstreamDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const cloneDir = tmp.dirSync({ unsafeCleanup: true }).name
+
     this.versions = []
 
-    const git = (...args) => execFileSync("git", args, { cwd: repoDir }).toString().trim()
+    const git = (...args) =>
+      execFileSync("git", args, { cwd: repoDir, stdio: "pipe" })
+        .toString()
+        .trim()
+
     const commit = (filePath, content) => {
       const absPath = path.join(repoDir, filePath)
       mkdirp.sync(path.dirname(absPath))
@@ -40,13 +47,16 @@ describe("Git JSON API", function() {
       this.versions.push(git("show-ref", "--hash", "master"))
     }
 
-    git("init", ".")
+    git("init", "--bare", upstreamDir)
+    git("clone", upstreamDir, ".")
+
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
     commit("dirB/x/file.json", fileBx)
 
-    const cloneDir = tmp.dirSync({ unsafeCleanup: true }).name
-    return fetchRepo(repoDir, cloneDir).then((repo) => { this.repo = repo })
+    git("push", "origin", "master")
+
+    return fetchRepo(upstreamDir, cloneDir).then((repo) => { this.repo = repo })
   })
 
   describe("getLatestVersion", function() {
