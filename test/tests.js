@@ -128,9 +128,10 @@ describe("Git JSON API", function() {
       }
 
       const result = await updatePath(this.repo, params, body)
-      expect(result).to.have.property("version")
+      const { version } = await getLatestVersion(this.repo)
+      expect(result).to.have.property("version", version)
 
-      const data = await getPath(this.repo, { version: result.version, 0: "dirA" })
+      const data = await getPath(this.repo, { version, 0: "dirA" })
       expect(data).to.deep.equal(body)
     })
   })
