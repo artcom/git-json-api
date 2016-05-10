@@ -76,7 +76,7 @@ export default async function updatePath(repo, params, data) {
   return { version: newOid.toString() }
 }
 
-export async function objectToTree(object, path, repo, schema) {
+async function objectToTree(object, path, repo, schema) {
   const builder = await Git.Treebuilder.create(repo, null)
 
   for (const key of Object.keys(object)) {
