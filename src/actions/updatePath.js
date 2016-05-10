@@ -13,22 +13,15 @@ export default async function updatePath(repo, params, data) {
 
   const parentTree = await parentCommit.getTree()
   const newTree = await createNewTree(repo, parentTree, data, path)
-
   const diff = await Git.Diff.treeToTree(repo, parentTree, newTree)
+
   if (diff.numDeltas() === 0) {
     return { version }
+  } else {
+    const newOid = await createCommit(repo, parentCommit, masterCommit, newTree, `Update ${path}`)
+    await pushToOrigin(repo)
+    return { version: newOid.toString() }
   }
-
-  const newOid = await createCommit(repo, parentCommit, masterCommit, newTree, `Update ${path}`)
-
-  const remote = await repo.getRemote("origin")
-  const errorCode = await remote.push("refs/heads/master:refs/heads/master")
-
-  if (errorCode) {
-    throw new Error(errorCode)
-  }
-
-  return { version: newOid.toString() }
 }
 
 async function createNewTree(repo, parentTree, data, path) {
@@ -108,4 +101,13 @@ async function objectToTree(object, path, repo, schema) {
   }
 
   return builder.write()
+}
+
+async function pushToOrigin(repo) {
+  const remote = await repo.getRemote("origin")
+  const errorCode = await remote.push("refs/heads/master:refs/heads/master")
+
+  if (errorCode) {
+    throw new Error(errorCode)
+  }
 }
