@@ -80,11 +80,8 @@ export async function objectToTree(object, path, repo, schema) {
   const builder = await Git.Treebuilder.create(repo, null)
 
   for (const key of Object.keys(object)) {
-    if (!object.hasOwnProperty(key)) {
-      continue
-    }
-
     const childPath = `${path}/${key}`
+
     if (isFile(childPath, schema.files)) {
       const buffer = new Buffer(`${JSON.stringify(object[key], null, 2)}\n`)
       const blobOid = Git.Blob.createFromBuffer(repo, buffer, buffer.length)
