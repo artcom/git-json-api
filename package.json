@@ -31,6 +31,7 @@
     "gulp-babel": "^6.1.2",
     "gulp-nodemon": "^2.0.6",
     "gulp-sourcemaps": "^1.6.0",
+    "mkdirp": "^0.5.1",
     "mocha": "^2.4.5",
     "tmp": "0.0.28"
   }
