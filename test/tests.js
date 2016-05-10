@@ -6,6 +6,7 @@ import path from "path"
 import tmp from "tmp"
 
 import getLatestVersion from "../src/actions/getLatestVersion"
+import getPath from "../src/actions/getPath"
 import getRoot from "../src/actions/getRoot"
 
 import { fetchRepo } from "../src/repo"
@@ -79,6 +80,30 @@ describe("Git JSON API", function() {
             file1: fileA1
           }
         })
+      })
+    })
+  })
+
+  describe("getPath", function() {
+    it("returns content of a directory", function() {
+      return getPath(this.repo, { version: last(this.versions), 0: "dirA" }).then((data) => {
+        expect(data).to.deep.equal({
+          file1: fileA1
+        })
+      })
+    })
+
+    it("returns content of a nested directory", function() {
+      return getPath(this.repo, { version: last(this.versions), 0: "dirB/x" }).then((data) => {
+        expect(data).to.deep.equal({
+          file: fileBx
+        })
+      })
+    })
+
+    it("returns content of a file", function() {
+      return getPath(this.repo, { version: last(this.versions), 0: "dirB/x/file" }).then((data) => {
+        expect(data).to.deep.equal(fileBx)
       })
     })
   })
