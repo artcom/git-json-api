@@ -188,7 +188,7 @@ describe("Git JSON API", function() {
         await updatePath(this.repo, params, body)
         expect.fail()
       } catch (error) {
-        expect(error).to.be.an("error")
+        expect(error).to.be.an("error").and.to.have.property("message", "Merge conflict")
       }
     })
   })

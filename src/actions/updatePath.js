@@ -49,6 +49,11 @@ export default async function updatePath(repo, params, data) {
     const masterCommit = await repo.getCommit(latest.version)
     const commit = await repo.getCommit(commitOid)
     const index = await Git.Merge.commits(repo, masterCommit, commit)
+
+    if (index.hasConflicts()) {
+      throw new Error("Merge conflict")
+    }
+
     const mergeTreeOid = await index.writeTreeTo(repo)
 
     newOid = await repo.createCommit(
