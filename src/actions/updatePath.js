@@ -25,13 +25,14 @@ export default async function updatePath(repo, params, data) {
   }
 
   const latest = await getLatestVersion(repo)
+  const signature = createSignature()
   let newOid
 
   if (version === latest.version) {
     newOid = await repo.createCommit(
       "refs/heads/master",
-      repo.defaultSignature(),
-      repo.defaultSignature(),
+      signature,
+      signature,
       `Update ${path}`,
       newTreeOid,
       [parentCommit]
@@ -39,8 +40,8 @@ export default async function updatePath(repo, params, data) {
   } else {
     const commitOid = await repo.createCommit(
       null,
-      repo.defaultSignature(),
-      repo.defaultSignature(),
+      signature,
+      signature,
       `Update ${path}`,
       newTreeOid,
       [parentCommit]
@@ -58,8 +59,8 @@ export default async function updatePath(repo, params, data) {
 
     newOid = await repo.createCommit(
       "refs/heads/master",
-      repo.defaultSignature(),
-      repo.defaultSignature(),
+      signature,
+      signature,
       `Merge ${path}`,
       mergeTreeOid,
       [masterCommit, commit]
@@ -74,6 +75,13 @@ export default async function updatePath(repo, params, data) {
   }
 
   return { version: newOid.toString() }
+}
+
+function createSignature() {
+  return Git.Signature.now(
+    process.env.SIGNATURE_NAME || "Git JSON API",
+    process.env.SIGNATURE_MAIL || "mail@example.com"
+  )
 }
 
 async function objectToTree(object, path, repo, schema) {
