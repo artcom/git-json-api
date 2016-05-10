@@ -92,5 +92,5 @@ async function objectToTree(object, path, repo, schema) {
     }
   }
 
-  return await builder.write()
+  return builder.write()
 }
