@@ -42,7 +42,7 @@ describe("Git JSON API", function() {
     const commit = (filePath, content) => {
       const absPath = path.join(repoDir, filePath)
       mkdirp.sync(path.dirname(absPath))
-      writeFileSync(absPath, JSON.stringify(content))
+      writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
       git("add", filePath)
       git("commit", "--message", `Add ${filePath}`)
       this.versions.push(git("show-ref", "--hash", "refs/heads/master"))
