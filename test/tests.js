@@ -118,6 +118,11 @@ describe("Git JSON API", function() {
   })
 
   describe("updatePath", function() {
+    const newFileA1 = {
+      foo: "bar",
+      number: 2
+    }
+
     it("writes changes to a file", async function() {
       const params = { version: last(this.versions), 0: "dirA" }
       const body = {
@@ -133,6 +138,58 @@ describe("Git JSON API", function() {
 
       const data = await getPath(this.repo, { version, 0: "dirA" })
       expect(data).to.deep.equal(body)
+    })
+
+    it("adds a new file", async function() {
+      const fileA2 = { more: "content" }
+      const params = { version: last(this.versions), 0: "dirA" }
+      const body = {
+        file1: fileA1,
+        file2: fileA2
+      }
+
+      const result = await updatePath(this.repo, params, body)
+      const { version } = await getLatestVersion(this.repo)
+      expect(result).to.have.property("version", version)
+
+      const data1 = await getPath(this.repo, { version, 0: "dirA/file1" })
+      expect(data1).to.deep.equal(fileA1)
+
+      const data2 = await getPath(this.repo, { version, 0: "dirA/file2" })
+      expect(data2).to.deep.equal(fileA2)
+    })
+
+    it("merges parallel changes", async function() {
+      const params = { version: this.versions[1], 0: "dirA" }
+      const body = { file1: newFileA1 }
+
+      const result = await updatePath(this.repo, params, body)
+      const { version } = await getLatestVersion(this.repo)
+      expect(result).to.have.property("version", version)
+
+      const data = await getRoot(this.repo, { version })
+      expect(data).to.deep.equal({
+        dirA: {
+          file1: newFileA1
+        },
+        dirB: {
+          x: {
+            file: fileBx
+          }
+        }
+      })
+    })
+
+    it("returns error for conflicting changes", async function() {
+      const params = { version: this.versions[0], 0: "dirA" }
+      const body = { file1: newFileA1 }
+
+      try {
+        await updatePath(this.repo, params, body)
+        expect.fail()
+      } catch (error) {
+        expect(error).to.be.an("error")
+      }
     })
   })
 })
