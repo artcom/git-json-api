@@ -21,7 +21,7 @@ export default async function updatePath(repo, params, data) {
 
   const diff = await Git.Diff.treeToTree(repo, parentTree, newTree)
   if (diff.numDeltas() === 0) {
-    return {}
+    return { version }
   }
 
   const latest = await getLatestVersion(repo)

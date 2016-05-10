@@ -191,6 +191,15 @@ describe("Git JSON API", function() {
         expect(error).to.be.an("error").and.to.have.property("message", "Merge conflict")
       }
     })
+
+    it("returns same version when nothing changes", async function() {
+      const version = last(this.versions)
+      const params = { version, 0: "dirA" }
+      const body = { file1: fileA1 }
+
+      const result = await updatePath(this.repo, params, body)
+      expect(result).to.have.property("version", version)
+    })
   })
 })
 
