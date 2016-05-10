@@ -25,47 +25,9 @@ export default async function updatePath(repo, params, data) {
   }
 
   const latest = await getLatestVersion(repo)
-  const signature = createSignature()
-  let newOid
+  const masterCommit = await repo.getCommit(latest.version)
 
-  if (version === latest.version) {
-    newOid = await repo.createCommit(
-      "refs/heads/master",
-      signature,
-      signature,
-      `Update ${path}`,
-      newTreeOid,
-      [parentCommit]
-    )
-  } else {
-    const commitOid = await repo.createCommit(
-      null,
-      signature,
-      signature,
-      `Update ${path}`,
-      newTreeOid,
-      [parentCommit]
-    )
-
-    const masterCommit = await repo.getCommit(latest.version)
-    const commit = await repo.getCommit(commitOid)
-    const index = await Git.Merge.commits(repo, masterCommit, commit)
-
-    if (index.hasConflicts()) {
-      throw new Error("Merge conflict")
-    }
-
-    const mergeTreeOid = await index.writeTreeTo(repo)
-
-    newOid = await repo.createCommit(
-      "refs/heads/master",
-      signature,
-      signature,
-      `Merge ${path}`,
-      mergeTreeOid,
-      [masterCommit, commit]
-    )
-  }
+  const newOid = await createCommit(repo, parentCommit, masterCommit, newTreeOid, `Update ${path}`)
 
   const remote = await repo.getRemote("origin")
   const errorCode = await remote.push("refs/heads/master:refs/heads/master")
@@ -75,6 +37,48 @@ export default async function updatePath(repo, params, data) {
   }
 
   return { version: newOid.toString() }
+}
+
+async function createCommit(repo, parentCommit, masterCommit, newTreeOid, message) {
+  const signature = createSignature()
+
+  if (parentCommit.sha() === masterCommit.sha()) {
+    return await repo.createCommit(
+      "refs/heads/master",
+      signature,
+      signature,
+      message,
+      newTreeOid,
+      [parentCommit]
+    )
+  } else {
+    const commitOid = await repo.createCommit(
+      null,
+      signature,
+      signature,
+      message,
+      newTreeOid,
+      [parentCommit]
+    )
+
+    const commit = await repo.getCommit(commitOid)
+    const index = await Git.Merge.commits(repo, masterCommit, commit)
+
+    if (index.hasConflicts()) {
+      throw new Error("Merge conflict")
+    }
+
+    const mergeTreeOid = await index.writeTreeTo(repo)
+
+    return await repo.createCommit(
+      "refs/heads/master",
+      signature,
+      signature,
+      "Merge",
+      mergeTreeOid,
+      [masterCommit, commit]
+    )
+  }
 }
 
 function createSignature() {
