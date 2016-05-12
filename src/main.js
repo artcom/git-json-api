@@ -8,16 +8,16 @@ import routes from "./routes"
 const app = express()
 const log = bunyan.createLogger({ name: "git-json-api" })
 const port = process.env.PORT || 3000
-const repo = process.env.REPO
+const repoUri = process.env.REPO_URI
 
-if (!repo) {
+if (!repoUri) {
   log.fatal("REPO environment variable must be set")
   process.exit(1)
 }
 
 app.use(bodyParser.json())
 app.use(cors())
-app.use("/", routes(repo))
+app.use("/", routes(repoUri))
 
 app.listen(port, () => {
   log.info({ port }, "git-json-api up and running")

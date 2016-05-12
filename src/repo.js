@@ -4,11 +4,11 @@ import Lock from "./lock"
 
 const repoLock = new Lock()
 
-export function repoHandler(url, callback) {
+export function repoHandler(uri, callback) {
   return async function(req, res) {
     await repoLock.lock()
     try {
-      const repo = await fetchRepo(url, "./.repo")
+      const repo = await fetchRepo(uri, "./.repo")
       const result = await callback(repo, req.params, req.body)
 
       repoLock.unlock()

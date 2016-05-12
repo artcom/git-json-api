@@ -7,10 +7,10 @@ import getRoot from "./actions/getRoot"
 import getPath from "./actions/getPath"
 import updatePath from "./actions/updatePath"
 
-export default function routes(repo) {
+export default function routes(repoUri) {
   return new express.Router()
-    .get("/latest", repoHandler(repo, getLatestVersion))
-    .get("/:version", repoHandler(repo, getRoot))
-    .get("/:version/*", repoHandler(repo, getPath))
-    .post("/:version/*", repoHandler(repo, updatePath))
+    .get("/latest", repoHandler(repoUri, getLatestVersion))
+    .get("/:version", repoHandler(repoUri, getRoot))
+    .get("/:version/*", repoHandler(repoUri, getPath))
+    .post("/:version/*", repoHandler(repoUri, updatePath))
 }

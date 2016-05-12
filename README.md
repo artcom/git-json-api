@@ -65,7 +65,7 @@ The content of a directory can be modified using a POST request. The body is exp
 ```bash
 npm install
 npm install --global gulp-cli
-REPO=<repo-url> gulp watch
+REPO_URI=<repo-url> gulp watch
 ```
 
 ## Deployment
@@ -80,7 +80,7 @@ ssh dokku@<server> apps:create git-json-api
 ssh dokku@<server> config:set git-json-api BUILD_ONLY=true NPM_CONFIG_PRODUCTION=false
 
 # configure repo and signature
-ssh dokku@<server> config:set git-json-api REPO=<repo-url>       # repository to be served
+ssh dokku@<server> config:set git-json-api REPO_URI=<repo-uri>   # repository to be served
 ssh dokku@<server> config:set git-json-api SIGNATURE_NAME=<name> # name for generated commits
 ssh dokku@<server> config:set git-json-api SIGNATURE_MAIL=<mail> # e-mail address for generated commits
 
