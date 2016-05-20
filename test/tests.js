@@ -38,19 +38,8 @@ describe("Git JSON API", function() {
     // versions contains all commit hashes
     this.versions = []
 
-    const git = (...args) =>
-      execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
-        .toString()
-        .trim()
-
-    const commit = (filePath, content) => {
-      const absPath = path.join(workingRepoDir, filePath)
-      mkdirp.sync(path.dirname(absPath))
-      writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
-      git("add", filePath)
-      git("commit", "--message", `Add ${filePath}`)
-      this.versions.push(git("show-ref", "--hash", "refs/heads/master"))
-    }
+    // create helper functions
+    const { git, commit } = createGitFunctions(workingRepoDir, this.versions)
 
     git("init", "--bare", originRepoDir)
     git("clone", originRepoDir, workingRepoDir)
@@ -208,10 +197,29 @@ describe("Git JSON API", function() {
   })
 })
 
-function last(array) {
-  return array[array.length - 1]
-}
-
 function createTempDir() {
   return tmp.dirSync({ unsafeCleanup: true }).name
+}
+
+function createGitFunctions(workingRepoDir, versions) {
+  function git(...args) {
+    return execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
+      .toString()
+      .trim()
+  }
+
+  function commit(filePath, content) {
+    const absPath = path.join(workingRepoDir, filePath)
+    mkdirp.sync(path.dirname(absPath))
+    writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
+    git("add", filePath)
+    git("commit", "--message", `Add ${filePath}`)
+    versions.push(git("show-ref", "--hash", "refs/heads/master"))
+  }
+
+  return { git, commit }
+}
+
+function last(array) {
+  return array[array.length - 1]
 }
