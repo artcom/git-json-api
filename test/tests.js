@@ -28,9 +28,9 @@ const fileBx = ["one", "two", "three"]
 
 describe("Git JSON API", function() {
   beforeEach(async function() {
-    const workingRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
-    const originRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
-    const cloneRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const workingRepoDir = createTempDir()
+    const originRepoDir = createTempDir()
+    const cloneRepoDir = createTempDir()
 
     this.versions = []
 
@@ -206,4 +206,8 @@ describe("Git JSON API", function() {
 
 function last(array) {
   return array[array.length - 1]
+}
+
+function createTempDir() {
+  return tmp.dirSync({ unsafeCleanup: true }).name
 }
