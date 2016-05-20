@@ -28,19 +28,19 @@ const fileBx = ["one", "two", "three"]
 
 describe("Git JSON API", function() {
   beforeEach(async function() {
-    const repoDir = tmp.dirSync({ unsafeCleanup: true }).name
-    const upstreamDir = tmp.dirSync({ unsafeCleanup: true }).name
-    const cloneDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const workingRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const originRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
+    const cloneRepoDir = tmp.dirSync({ unsafeCleanup: true }).name
 
     this.versions = []
 
     const git = (...args) =>
-      execFileSync("git", args, { cwd: repoDir, stdio: "pipe" })
+      execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
         .toString()
         .trim()
 
     const commit = (filePath, content) => {
-      const absPath = path.join(repoDir, filePath)
+      const absPath = path.join(workingRepoDir, filePath)
       mkdirp.sync(path.dirname(absPath))
       writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
       git("add", filePath)
@@ -48,17 +48,17 @@ describe("Git JSON API", function() {
       this.versions.push(git("show-ref", "--hash", "refs/heads/master"))
     }
 
-    git("init", "--bare", upstreamDir)
-    git("clone", upstreamDir, ".")
+    git("init", "--bare", originRepoDir)
+    git("clone", originRepoDir, ".")
 
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
     git("push", "origin", "master")
-    this.repo = await updateRepo(upstreamDir, cloneDir)
+    this.repo = await updateRepo(originRepoDir, cloneRepoDir)
 
     commit("dirB/x/file.json", fileBx)
     git("push", "origin", "master")
-    this.repo = await updateRepo(upstreamDir, cloneDir)
+    this.repo = await updateRepo(originRepoDir, cloneRepoDir)
   })
 
   describe("getLatestVersion", function() {
