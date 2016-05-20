@@ -10,7 +10,7 @@ import getPath from "../src/actions/getPath"
 import getRoot from "../src/actions/getRoot"
 import updatePath from "../src/actions/updatePath"
 
-import { fetchRepo } from "../src/repo"
+import { updateRepo } from "../src/repo"
 
 const schema = {
   files: [
@@ -54,11 +54,11 @@ describe("Git JSON API", function() {
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
     git("push", "origin", "master")
-    this.repo = await fetchRepo(upstreamDir, cloneDir)
+    this.repo = await updateRepo(upstreamDir, cloneDir)
 
     commit("dirB/x/file.json", fileBx)
     git("push", "origin", "master")
-    this.repo = await fetchRepo(upstreamDir, cloneDir)
+    this.repo = await updateRepo(upstreamDir, cloneDir)
   })
 
   describe("getLatestVersion", function() {

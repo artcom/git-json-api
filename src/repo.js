@@ -8,7 +8,7 @@ export function repoHandler(uri, callback) {
   return async function(req, res) {
     await repoLock.lock()
     try {
-      const repo = await fetchRepo(uri, "./.repo")
+      const repo = await updateRepo(uri, "./.repo")
       const result = await callback(repo, req.params, req.body)
 
       repoLock.unlock()
@@ -20,9 +20,14 @@ export function repoHandler(uri, callback) {
   }
 }
 
-export async function fetchRepo(src, path) {
+export async function updateRepo(src, path) {
   const repo = await getRepo(src, path)
   await repo.fetch("origin")
+
+  const master = await repo.getBranch("master")
+  const commit = await repo.getReferenceCommit("refs/remotes/origin/master")
+  await master.setTarget(commit.id(), "reset master to origin/master")
+
   return repo
 }
 

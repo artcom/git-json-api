@@ -1,14 +1,12 @@
 import Git from "nodegit"
 
-import getLatestVersion from "./getLatestVersion"
 import { getSchema, isFile } from "./helpers"
 
 export default async function updatePath(repo, params, data) {
   const version = params.version
   const path = params[0]
 
-  const latest = await getLatestVersion(repo)
-  const masterCommit = await repo.getCommit(latest.version)
+  const masterCommit = await repo.getMasterCommit()
   const parentCommit = await repo.getCommit(version)
 
   const parentTree = await parentCommit.getTree()
