@@ -53,10 +53,11 @@ describe("Git JSON API", function() {
 
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
-    commit("dirB/x/file.json", fileBx)
-
     git("push", "origin", "master")
+    this.repo = await fetchRepo(upstreamDir, cloneDir)
 
+    commit("dirB/x/file.json", fileBx)
+    git("push", "origin", "master")
     this.repo = await fetchRepo(upstreamDir, cloneDir)
   })
 
