@@ -28,10 +28,14 @@ const fileBx = ["one", "two", "three"]
 
 describe("Git JSON API", function() {
   beforeEach(async function() {
+    // workingRepo is used to push test data into the bare originRepo
     const workingRepoDir = createTempDir()
     const originRepoDir = createTempDir()
+
+    // cloneRepo is the local clone of originRepo used by the API
     const cloneRepoDir = createTempDir()
 
+    // versions contains all commit hashes
     this.versions = []
 
     const git = (...args) =>
@@ -49,7 +53,7 @@ describe("Git JSON API", function() {
     }
 
     git("init", "--bare", originRepoDir)
-    git("clone", originRepoDir, ".")
+    git("clone", originRepoDir, workingRepoDir)
 
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
