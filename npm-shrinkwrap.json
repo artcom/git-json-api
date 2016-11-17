@@ -3708,5 +3708,6 @@
       "from": "xtend@>=4.0.0 <5.0.0",
       "resolved": "https://registry.npmjs.org/xtend/-/xtend-4.0.1.tgz"
     }
-  }
+  },
+  "version": "0.1.0"
 }

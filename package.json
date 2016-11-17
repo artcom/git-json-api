@@ -1,6 +1,6 @@
 {
   "name": "git-json-api",
-  "private": true,
+  "version": "0.1.0",
   "scripts": {
     "start": "gulp compile && node dist/main.js",
     "test": "mocha --compilers js:babel-register"
