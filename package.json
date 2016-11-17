@@ -1,6 +1,7 @@
 {
   "name": "git-json-api",
   "version": "0.1.0",
+  "license": "MIT",
   "scripts": {
     "start": "gulp compile && node dist/main.js",
     "test": "mocha --compilers js:babel-register"
