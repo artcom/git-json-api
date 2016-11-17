@@ -2,9 +2,34 @@
 
 A JSON API to serve the contents of JSON5 files from a Git repo. All files in the repo are expected to be JSON5 files with a `.json` extension.
 
-## Usage
+## Configuration
 
-The API has the following endpoints:
+### Environment Variables
+
+The service can be configured using these environment variables:
+
+* `REPO_URI` _(required)_ URI of the Git repository
+* `SIGNATURE_NAME` _(optional)_ Name used for generated commits
+* `SIGNATURE_MAIL` _(optional)_ E-mail address used for generated commits
+
+### schema.json
+
+The Git repo must contain a file named `schema.json` in the root directory. It describes the directory structure of the repo by defining a list of glob patterns. Any file in the repository should be matched by one of the glob patterns.
+
+#### Example
+
+```json
+{
+  "files": [
+    "some-directory/*",
+    "other-directory/*/file"
+  ]
+}
+```
+
+In this example, the repo could contain files like `some-directory/foo.json`, `some-directory/foo.json`, `other-directory/a/file.json` or `other-directory/b/file.json`.
+
+## API
 
 ### `GET /latest`
 
@@ -70,23 +95,6 @@ REPO_URI=<repo-url> gulp watch
 
 ## Deployment
 
-**NOTE** Installing the `nodegit` dependency on Dokku requires some tweaking, namely setting the environment variables `BUILD_ONLY=true` and `NPM_CONFIG_PRODUCTION=false`.
+The service is designed to be deployed using [Dokku](http://dokku.viewdocs.io/dokku/) and will probably also work with [Heroku](https://www.heroku.com/) and other compatible platforms.
 
-```bash
-# create app
-ssh dokku@<server> apps:create git-json-api
-
-# make sure nodegit will be build from source
-ssh dokku@<server> config:set git-json-api BUILD_ONLY=true NPM_CONFIG_PRODUCTION=false
-
-# configure repo and signature
-ssh dokku@<server> config:set git-json-api REPO_URI=<repo-uri>   # repository to be served
-ssh dokku@<server> config:set git-json-api SIGNATURE_NAME=<name> # name for generated commits
-ssh dokku@<server> config:set git-json-api SIGNATURE_MAIL=<mail> # e-mail address for generated commits
-
-# add dokku server as remote
-git remote add <environment> dokku@<server>:git-json-api
-
-# deploy to server
-git push <environment> master
-```
+**NOTE:** Installing the `nodegit` dependency on Dokku requires some tweaking, namely setting the environment variables `BUILD_ONLY=true` and `NPM_CONFIG_PRODUCTION=false`.
