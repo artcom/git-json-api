@@ -5,7 +5,6 @@ import mkdirp from "mkdirp"
 import path from "path"
 import tmp from "tmp"
 
-import getLatestVersion from "../src/actions/getLatestVersion"
 import getPath from "../src/actions/getPath"
 import getRoot from "../src/actions/getRoot"
 import updatePath from "../src/actions/updatePath"
@@ -54,18 +53,11 @@ describe("Git JSON API", function() {
     this.repo = await updateRepo(originRepoDir, cloneRepoDir)
   })
 
-  describe("getLatestVersion", function() {
-    it("returns the latest version", async function() {
-      const result = await getLatestVersion(this.repo)
-      expect(result).to.have.property("version", last(this.versions))
-    })
-  })
-
   describe("getRoot", function() {
     it("returns complete JSON data for latest version", async function() {
-      const data = await getRoot(this.repo, { version: last(this.versions) })
+      const { body, headers } = await getRoot(this.repo, { version: "master" })
 
-      expect(data).to.deep.equal({
+      expect(body).to.deep.equal({
         dirA: {
           file1: fileA1
         },
@@ -75,39 +67,49 @@ describe("Git JSON API", function() {
           }
         }
       })
+
+      expect(headers).to.have.property("ETag", last(this.versions))
     })
 
     it("returns complete JSON data for older version", async function() {
-      const data = await getRoot(this.repo, { version: this.versions[1] })
+      const version = this.versions[1]
+      const { body, headers } = await getRoot(this.repo, { version })
 
-      expect(data).to.deep.equal({
+      expect(body).to.deep.equal({
         dirA: {
           file1: fileA1
         }
       })
+
+      expect(headers).to.have.property("ETag", version)
     })
   })
 
   describe("getPath", function() {
     it("returns content of a directory", async function() {
-      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirA" })
+      const { body, headers } = await getPath(this.repo, { version: "master", 0: "dirA" })
 
-      expect(data).to.deep.equal({
+      expect(body).to.deep.equal({
         file1: fileA1
       })
+
+      expect(headers).to.have.property("ETag", last(this.versions))
     })
 
     it("returns content of a nested directory", async function() {
-      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirB/x" })
+      const { body, headers } = await getPath(this.repo, { version: "master", 0: "dirB/x" })
 
-      expect(data).to.deep.equal({
+      expect(body).to.deep.equal({
         file: fileBx
       })
+
+      expect(headers).to.have.property("ETag", last(this.versions))
     })
 
     it("returns content of a file", async function() {
-      const data = await getPath(this.repo, { version: last(this.versions), 0: "dirB/x/file" })
-      expect(data).to.deep.equal(fileBx)
+      const { body, headers } = await getPath(this.repo, { version: "master", 0: "dirB/x/file" })
+      expect(body).to.deep.equal(fileBx)
+      expect(headers).to.have.property("ETag", last(this.versions))
     })
   })
 
@@ -126,12 +128,12 @@ describe("Git JSON API", function() {
         }
       }
 
-      const result = await updatePath(this.repo, params, body)
-      const { version } = await getLatestVersion(this.repo)
-      expect(result).to.have.property("version", version)
+      const { headers } = await updatePath(this.repo, params, body)
+      const version = await getLatestVersion(this.repo)
+      expect(headers).to.have.property("ETag", version)
 
-      const data = await getPath(this.repo, { version, 0: "dirA" })
-      expect(data).to.deep.equal(body)
+      const response = await getPath(this.repo, { version, 0: "dirA" })
+      expect(response.body).to.deep.equal(body)
     })
 
     it("adds a new file", async function() {
@@ -142,27 +144,27 @@ describe("Git JSON API", function() {
         file2: fileA2
       }
 
-      const result = await updatePath(this.repo, params, body)
-      const { version } = await getLatestVersion(this.repo)
-      expect(result).to.have.property("version", version)
+      const { headers } = await updatePath(this.repo, params, body)
+      const version = await getLatestVersion(this.repo)
+      expect(headers).to.have.property("ETag", version)
 
-      const data1 = await getPath(this.repo, { version, 0: "dirA/file1" })
-      expect(data1).to.deep.equal(fileA1)
+      const response1 = await getPath(this.repo, { version, 0: "dirA/file1" })
+      expect(response1.body).to.deep.equal(fileA1)
 
-      const data2 = await getPath(this.repo, { version, 0: "dirA/file2" })
-      expect(data2).to.deep.equal(fileA2)
+      const response2 = await getPath(this.repo, { version, 0: "dirA/file2" })
+      expect(response2.body).to.deep.equal(fileA2)
     })
 
     it("merges parallel changes", async function() {
       const params = { version: this.versions[1], 0: "dirA" }
       const body = { file1: newFileA1 }
 
-      const result = await updatePath(this.repo, params, body)
-      const { version } = await getLatestVersion(this.repo)
-      expect(result).to.have.property("version", version)
+      const { headers } = await updatePath(this.repo, params, body)
+      const version = await getLatestVersion(this.repo)
+      expect(headers).to.have.property("ETag", version)
 
-      const data = await getRoot(this.repo, { version })
-      expect(data).to.deep.equal({
+      const response = await getRoot(this.repo, { version })
+      expect(response.body).to.deep.equal({
         dirA: {
           file1: newFileA1
         },
@@ -191,8 +193,8 @@ describe("Git JSON API", function() {
       const params = { version, 0: "dirA" }
       const body = { file1: fileA1 }
 
-      const result = await updatePath(this.repo, params, body)
-      expect(result).to.have.property("version", version)
+      const { headers } = await updatePath(this.repo, params, body)
+      expect(headers).to.have.property("ETag", version)
     })
   })
 })
@@ -218,6 +220,11 @@ function createGitFunctions(workingRepoDir, versions) {
   }
 
   return { git, commit }
+}
+
+async function getLatestVersion(repo) {
+  const { headers } = await getRoot(repo, { version: "master" })
+  return headers.ETag
 }
 
 function last(array) {

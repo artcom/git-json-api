@@ -9,10 +9,18 @@ export function repoHandler(uri, callback) {
     await repoLock.lock()
     try {
       const repo = await updateRepo(uri, "./.repo")
-      const result = await callback(repo, req.params, req.body)
-
+      const { headers, body } = await callback(repo, req.params, req.body)
       repoLock.unlock()
-      res.json(result)
+
+      Object.keys(headers).forEach((key) => {
+        res.setHeader(key, headers[key])
+      })
+
+      if (body) {
+        res.json(body)
+      } else {
+        res.end()
+      }
     } catch (error) {
       repoLock.unlock()
       res.status(500).json({ error: error.message })

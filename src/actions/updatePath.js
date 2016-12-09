@@ -1,6 +1,6 @@
 import Git from "nodegit"
 
-import { getSchema, isFile } from "./helpers"
+import { getSchema, isFile, response } from "./helpers"
 
 export default async function updatePath(repo, params, data) {
   const version = params.version
@@ -14,11 +14,11 @@ export default async function updatePath(repo, params, data) {
   const diff = await Git.Diff.treeToTree(repo, parentTree, newTree)
 
   if (diff.numDeltas() === 0) {
-    return { version }
+    return response(version)
   } else {
     const newOid = await createCommit(repo, parentCommit, masterCommit, newTree, `Update ${path}`)
     await pushToOrigin(repo)
-    return { version: newOid.toString() }
+    return response(newOid.toString())
   }
 }
 

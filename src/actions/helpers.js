@@ -36,3 +36,19 @@ export async function entryToObject(entry) {
     return JSON5.parse(blob.content())
   }
 }
+
+export async function getVersion(repo, version) {
+  if (version === "master") {
+    const master = await repo.getMasterCommit()
+    return master.sha()
+  } else {
+    return version
+  }
+}
+
+export function response(version, body) {
+  return {
+    headers: { ETag: version },
+    body
+  }
+}
