@@ -7,7 +7,7 @@
     "test": "mocha --compilers js:babel-register"
   },
   "engines": {
-    "node": "6.2.0"
+    "node": "6.7.0"
   },
   "dependencies": {
     "body-parser": "^1.15.0",
@@ -16,24 +16,23 @@
     "express": "^4.13.4",
     "json5": "^0.5.0",
     "minimatch": "^3.0.0",
-    "nodegit": "^0.12.2"
+    "nodegit": "^0.16.0"
   },
   "devDependencies": {
-    "babel-eslint": "^6.0.2",
     "babel-plugin-syntax-async-functions": "^6.5.0",
     "babel-plugin-transform-async-to-generator": "^6.7.4",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.7.7",
     "babel-register": "^6.8.0",
     "chai": "^3.5.0",
-    "eslint": "^2.8.0",
-    "eslint-config-artcom": "^0.2.0",
-    "eslint-plugin-import": "^1.5.0",
+    "eslint": "^3.11.1",
+    "eslint-config-artcom": "^0.5.1",
+    "eslint-plugin-import": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-nodemon": "^2.0.6",
     "gulp-sourcemaps": "^1.6.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^2.4.5",
-    "tmp": "0.0.28"
+    "mocha": "^3.2.0",
+    "tmp": "^0.0.31"
   }
 }

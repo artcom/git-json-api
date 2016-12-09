@@ -1,5 +1,4 @@
 {
-  "parser": "babel-eslint",
   "extends": "artcom",
   "rules": {
     "func-names": "off"
