@@ -35,7 +35,7 @@ In this example, the repo could contain files like `some-directory/foo.json`, `s
 
 Returns the contents of the repo at the given version as a single JSON object.
 
-Version can either be a Git commit hash or `master`. The response will contain the Git commit hash in the `ETag` header.
+Version can either be a Git commit hash or `master`. The response will contain the Git commit hash in the `Git-Commit-Hash` header.
 
 The returned object contains the contents of every file in the root of the repo in a property named like the file (without extension). For every directory, it contains another object with the same structure.
 
@@ -79,7 +79,7 @@ Optionally, the previous route can be called with an additional path to a file o
 
 The content of a directory can be modified using a POST request. The body is expected to contain JSON data for all files and subdirectories. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `POST /:version/path`. To ensure consistency, only Git commit hashes are accepted for the version parameter in this case.
 
-A new Git commit will be created and merged if necessary. The response will contain the hash of the new (merge) commit in the `ETag` header. If the merge fails, an error will be returned.
+A new Git commit will be created and merged if necessary. The response will contain the hash of the new (merge) commit in the `Git-Commit-Hash` header. If the merge fails, an error will be returned.
 
 ## Development Setup
 

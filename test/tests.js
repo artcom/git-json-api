@@ -69,7 +69,7 @@ describe("Git JSON API", function() {
         }
       })
 
-      expect(headers).to.have.property("ETag", last(this.versions))
+      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
     }))
 
     it("returns complete JSON data for older version", co.wrap(function*() {
@@ -82,7 +82,7 @@ describe("Git JSON API", function() {
         }
       })
 
-      expect(headers).to.have.property("ETag", version)
+      expect(headers).to.have.property("Git-Commit-Hash", version)
     }))
   })
 
@@ -94,7 +94,7 @@ describe("Git JSON API", function() {
         file1: fileA1
       })
 
-      expect(headers).to.have.property("ETag", last(this.versions))
+      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
     }))
 
     it("returns content of a nested directory", co.wrap(function*() {
@@ -104,13 +104,13 @@ describe("Git JSON API", function() {
         file: fileBx
       })
 
-      expect(headers).to.have.property("ETag", last(this.versions))
+      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
     }))
 
     it("returns content of a file", co.wrap(function*() {
       const { body, headers } = yield getPath(this.repo, { version: "master", 0: "dirB/x/file" })
       expect(body).to.deep.equal(fileBx)
-      expect(headers).to.have.property("ETag", last(this.versions))
+      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
     }))
   })
 
@@ -131,7 +131,7 @@ describe("Git JSON API", function() {
 
       const { headers } = yield updatePath(this.repo, params, body)
       const version = yield getLatestVersion(this.repo)
-      expect(headers).to.have.property("ETag", version)
+      expect(headers).to.have.property("Git-Commit-Hash", version)
 
       const response = yield getPath(this.repo, { version, 0: "dirA" })
       expect(response.body).to.deep.equal(body)
@@ -147,7 +147,7 @@ describe("Git JSON API", function() {
 
       const { headers } = yield updatePath(this.repo, params, body)
       const version = yield getLatestVersion(this.repo)
-      expect(headers).to.have.property("ETag", version)
+      expect(headers).to.have.property("Git-Commit-Hash", version)
 
       const response1 = yield getPath(this.repo, { version, 0: "dirA/file1" })
       expect(response1.body).to.deep.equal(fileA1)
@@ -162,7 +162,7 @@ describe("Git JSON API", function() {
 
       const { headers } = yield updatePath(this.repo, params, body)
       const version = yield getLatestVersion(this.repo)
-      expect(headers).to.have.property("ETag", version)
+      expect(headers).to.have.property("Git-Commit-Hash", version)
 
       const response = yield getRoot(this.repo, { version })
       expect(response.body).to.deep.equal({
@@ -195,7 +195,7 @@ describe("Git JSON API", function() {
       const body = { file1: fileA1 }
 
       const { headers } = yield updatePath(this.repo, params, body)
-      expect(headers).to.have.property("ETag", version)
+      expect(headers).to.have.property("Git-Commit-Hash", version)
     }))
   })
 })
@@ -225,7 +225,7 @@ function createGitFunctions(workingRepoDir, versions) {
 
 function* getLatestVersion(repo) {
   const { headers } = yield getRoot(repo, { version: "master" })
-  return headers.ETag
+  return headers["Git-Commit-Hash"]
 }
 
 function last(array) {

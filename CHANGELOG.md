@@ -6,11 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Removed
-- `GET /latest` (use `GET /master` or `GET /master/path` instead and read the version from the `ETag` header)
+- `GET /latest` (use `GET /master` or `GET /master/path` instead and read the version from the `Git-Commit-Hash` header)
 
 ### Changed
 - `GET /:version` and `GET /:version/path` support using `master` for the version parameter
-- all routes return the actual version in the `ETag` header
+- all routes return the actual version in the `Git-Commit-Hash` header
 
 ## [0.1.0] - 2016-11-17
 ### Added

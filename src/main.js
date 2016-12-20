@@ -16,7 +16,7 @@ if (!repoUri) {
 }
 
 app.use(bodyParser.json())
-app.use(cors({ exposedHeaders: ["ETag"] }))
+app.use(cors())
 app.use("/", routes(repoUri))
 
 app.listen(port, () => {

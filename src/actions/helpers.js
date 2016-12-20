@@ -49,7 +49,7 @@ exports.getVersion = co.wrap(function*(repo, version) {
 
 exports.response = function(version, body) {
   return {
-    headers: { ETag: version },
+    headers: { "Git-Commit-Hash": version },
     body
   }
 }
