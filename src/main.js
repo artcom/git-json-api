@@ -1,9 +1,9 @@
-import bodyParser from "body-parser"
-import bunyan from "bunyan"
-import cors from "cors"
-import express from "express"
+const bodyParser = require("body-parser")
+const bunyan = require("bunyan")
+const cors = require("cors")
+const express = require("express")
 
-import routes from "./routes"
+const routes = require("./routes")
 
 const app = express()
 const log = bunyan.createLogger({ name: "git-json-api" })

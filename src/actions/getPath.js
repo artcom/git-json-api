@@ -1,8 +1,8 @@
-import co from "co"
+const co = require("co")
 
-import { entryToObject, getSchema, getVersion, isFile, response } from "./helpers"
+const { entryToObject, getSchema, getVersion, isFile, response } = require("./helpers")
 
-export default co.wrap(function* getPath(repo, params) {
+module.exports = co.wrap(function* getPath(repo, params) {
   const version = yield getVersion(repo, params.version)
   const path = params[0]
 

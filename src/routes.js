@@ -1,12 +1,12 @@
-import express from "express"
+const express = require("express")
 
-import { repoHandler } from "./repo"
+const { repoHandler } = require("./repo")
 
-import getRoot from "./actions/getRoot"
-import getPath from "./actions/getPath"
-import updatePath from "./actions/updatePath"
+const getRoot = require("./actions/getRoot")
+const getPath = require("./actions/getPath")
+const updatePath = require("./actions/updatePath")
 
-export default function routes(repoUri) {
+module.exports = function routes(repoUri) {
   return new express.Router()
     .get("/:version", repoHandler(repoUri, getRoot))
     .get("/:version/*", repoHandler(repoUri, getPath))

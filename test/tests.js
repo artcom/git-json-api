@@ -1,16 +1,16 @@
-import { expect } from "chai"
-import { execFileSync } from "child_process"
-import co from "co"
-import { writeFileSync } from "fs"
-import mkdirp from "mkdirp"
-import path from "path"
-import tmp from "tmp"
+const { expect } = require("chai")
+const { execFileSync } = require("child_process")
+const co = require("co")
+const { writeFileSync } = require("fs")
+const mkdirp = require("mkdirp")
+const path = require("path")
+const tmp = require("tmp")
 
-import getPath from "../src/actions/getPath"
-import getRoot from "../src/actions/getRoot"
-import updatePath from "../src/actions/updatePath"
+const getPath = require("../src/actions/getPath")
+const getRoot = require("../src/actions/getRoot")
+const updatePath = require("../src/actions/updatePath")
 
-import { updateRepo } from "../src/repo"
+const { updateRepo } = require("../src/repo")
 
 const schema = {
   files: [

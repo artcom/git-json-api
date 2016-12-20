@@ -1,4 +1,4 @@
-export default class Lock {
+module.exports = class Lock {
   constructor() {
     this.isLocked = false
     this.queue = []

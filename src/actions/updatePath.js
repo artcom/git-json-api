@@ -1,9 +1,9 @@
-import co from "co"
-import Git from "nodegit"
+const co = require("co")
+const Git = require("nodegit")
 
-import { getSchema, isFile, response } from "./helpers"
+const { getSchema, isFile, response } = require("./helpers")
 
-export default co.wrap(function* updatePath(repo, params, data) {
+module.exports = co.wrap(function* updatePath(repo, params, data) {
   const version = params.version
   const path = params[0]
 

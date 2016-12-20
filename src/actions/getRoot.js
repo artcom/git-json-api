@@ -1,8 +1,8 @@
-import co from "co"
+const co = require("co")
 
-import { getVersion, response, treeToObject } from "./helpers"
+const { getVersion, response, treeToObject } = require("./helpers")
 
-export default co.wrap(function* getRoot(repo, params) {
+module.exports = co.wrap(function* getRoot(repo, params) {
   const version = yield getVersion(repo, params.version)
 
   const commit = yield repo.getCommit(version)

@@ -1,15 +1,15 @@
-import co from "co"
-import git from "nodegit"
+const co = require("co")
+const git = require("nodegit")
 
-import Lock from "./lock"
+const Lock = require("./lock")
 
 const repoLock = new Lock()
 
-export function repoHandler(uri, callback) {
+exports.repoHandler = function(uri, callback) {
   return co.wrap(function*(req, res) {
     yield repoLock.lock()
     try {
-      const repo = yield updateRepo(uri, "./.repo")
+      const repo = yield exports.updateRepo(uri, "./.repo")
       const { headers, body } = yield callback(repo, req.params, req.body)
       repoLock.unlock()
 
@@ -29,7 +29,7 @@ export function repoHandler(uri, callback) {
   })
 }
 
-export const updateRepo = co.wrap(function* (src, path) {
+exports.updateRepo = co.wrap(function* (src, path) {
   const repo = yield getRepo(src, path)
   yield repo.fetch("origin")
 
