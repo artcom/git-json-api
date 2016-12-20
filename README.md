@@ -85,8 +85,7 @@ A new Git commit will be created and merged if necessary. The response will cont
 
 ```bash
 npm install
-npm install --global gulp-cli
-REPO_URI=<repo-url> gulp watch
+REPO_URI=<repo-url> npm run watch
 ```
 
 ## Deployment
