@@ -1,6 +1,7 @@
 {
   "extends": "artcom",
   "rules": {
-    "func-names": "off"
+    "func-names": "off",
+    "no-use-before-define": "off"
   }
 }
