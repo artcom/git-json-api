@@ -1,3 +1,6 @@
 {
-  "extends": "artcom/mocha"
+  "extends": "artcom/mocha",
+  "rules": {
+    "import/no-commonjs": "off"
+  }
 }
