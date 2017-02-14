@@ -15,7 +15,7 @@ if (!repoUri) {
   process.exit(1)
 }
 
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: process.env.BODY_SIZE_LIMIT || "100kb" }))
 app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
 app.use("/", routes(repoUri))
 
