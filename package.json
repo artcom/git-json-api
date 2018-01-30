@@ -9,7 +9,7 @@
     "watch": "nodemon src/main.js | bunyan"
   },
   "engines": {
-    "node": "6.9.2"
+    "node": "8.9.4"
   },
   "dependencies": {
     "body-parser": "^1.15.0",
