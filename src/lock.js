@@ -6,9 +6,7 @@ module.exports = class Lock {
 
   lock() {
     if (this.isLocked) {
-      return new Promise((resolve) => {
-        this.queue.push(resolve)
-      })
+      return new Promise(resolve => this.queue.push(resolve))
     } else {
       this.isLocked = true
       return Promise.resolve()

@@ -1,6 +1,5 @@
 const { expect } = require("chai")
 const { execFileSync } = require("child_process")
-const co = require("co")
 const { writeFileSync } = require("fs")
 const mkdirp = require("mkdirp")
 const path = require("path")
@@ -26,8 +25,13 @@ const fileA1 = {
 
 const fileBx = ["one", "two", "three"]
 
+let repo = null
+
+// versions contains all commit hashes
+let versions = []
+
 describe("Git JSON API", function() {
-  beforeEach(co.wrap(function*() {
+  beforeEach(async () => {
     // workingRepo is used to push test data into the bare originRepo
     const workingRepoDir = createTempDir()
     const originRepoDir = createTempDir()
@@ -35,11 +39,9 @@ describe("Git JSON API", function() {
     // cloneRepo is the local clone of originRepo used by the API
     const cloneRepoDir = createTempDir()
 
-    // versions contains all commit hashes
-    this.versions = []
-
     // create helper functions
-    const { git, commit } = createGitFunctions(workingRepoDir, this.versions)
+    versions = []
+    const { git, commit } = createGitFunctions(workingRepoDir, versions)
 
     git("init", "--bare", originRepoDir)
     git("clone", originRepoDir, workingRepoDir)
@@ -47,16 +49,15 @@ describe("Git JSON API", function() {
     commit("schema.json", schema)
     commit("dirA/file1.json", fileA1)
     git("push", "origin", "master")
-    this.repo = yield updateRepo(originRepoDir, cloneRepoDir)
-
+    repo = await updateRepo(originRepoDir, cloneRepoDir)
     commit("dirB/x/file.json", fileBx)
     git("push", "origin", "master")
-    this.repo = yield updateRepo(originRepoDir, cloneRepoDir)
-  }))
+    repo = await updateRepo(originRepoDir, cloneRepoDir)
+  })
 
   describe("getRoot", function() {
-    it("returns complete JSON data for latest version", co.wrap(function*() {
-      const { body, headers } = yield getRoot(this.repo, { version: "master" })
+    it("returns complete JSON data for latest version", async () => {
+      const { body, headers } = await getRoot(repo, { version: "master" })
 
       expect(body).to.deep.equal({
         dirA: {
@@ -69,12 +70,12 @@ describe("Git JSON API", function() {
         }
       })
 
-      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
-    }))
+      expect(headers).to.have.property("Git-Commit-Hash", last(versions))
+    })
 
-    it("returns complete JSON data for older version", co.wrap(function*() {
-      const version = this.versions[1]
-      const { body, headers } = yield getRoot(this.repo, { version })
+    it("returns complete JSON data for older version", async () => {
+      const version = versions[1]
+      const { body, headers } = await getRoot(repo, { version })
 
       expect(body).to.deep.equal({
         dirA: {
@@ -83,45 +84,42 @@ describe("Git JSON API", function() {
       })
 
       expect(headers).to.have.property("Git-Commit-Hash", version)
-    }))
+    })
   })
 
   describe("getPath", function() {
-    it("returns content of a directory", co.wrap(function*() {
-      const { body, headers } = yield getPath(this.repo, { version: "master", 0: "dirA" })
+    it("returns content of a directory", async () => {
+      const { body, headers } = await getPath(repo, { version: "master", 0: "dirA" })
 
       expect(body).to.deep.equal({
         file1: fileA1
       })
 
-      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
-    }))
+      expect(headers).to.have.property("Git-Commit-Hash", last(versions))
+    })
 
-    it("returns content of a nested directory", co.wrap(function*() {
-      const { body, headers } = yield getPath(this.repo, { version: "master", 0: "dirB/x" })
+    it("returns content of a nested directory", async () => {
+      const { body, headers } = await getPath(repo, { version: "master", 0: "dirB/x" })
 
       expect(body).to.deep.equal({
         file: fileBx
       })
 
-      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
-    }))
+      expect(headers).to.have.property("Git-Commit-Hash", last(versions))
+    })
 
-    it("returns content of a file", co.wrap(function*() {
-      const { body, headers } = yield getPath(this.repo, { version: "master", 0: "dirB/x/file" })
+    it("returns content of a file", async () => {
+      const { body, headers } = await getPath(repo, { version: "master", 0: "dirB/x/file" })
       expect(body).to.deep.equal(fileBx)
-      expect(headers).to.have.property("Git-Commit-Hash", last(this.versions))
-    }))
+      expect(headers).to.have.property("Git-Commit-Hash", last(versions))
+    })
   })
 
   describe("updatePath", function() {
-    const newFileA1 = {
-      foo: "bar",
-      number: 2
-    }
+    const newFileA1 = { foo: "bar", number: 2 }
 
-    it("writes changes to a file", co.wrap(function*() {
-      const params = { version: last(this.versions), 0: "dirA" }
+    it("writes changes to a file", async () => {
+      const params = { version: last(versions), 0: "dirA" }
       const body = {
         file1: {
           foo: "bar",
@@ -129,42 +127,43 @@ describe("Git JSON API", function() {
         }
       }
 
-      const { headers } = yield updatePath(this.repo, params, body)
-      const version = yield getLatestVersion(this.repo)
+      const { headers } = await updatePath(repo, params, body)
+
+      const version = await getLatestVersion(repo)
       expect(headers).to.have.property("Git-Commit-Hash", version)
 
-      const response = yield getPath(this.repo, { version, 0: "dirA" })
+      const response = await getPath(repo, { version, 0: "dirA" })
       expect(response.body).to.deep.equal(body)
-    }))
+    })
 
-    it("adds a new file", co.wrap(function*() {
+    it("adds a new file", async () => {
       const fileA2 = { more: "content" }
-      const params = { version: last(this.versions), 0: "dirA" }
+      const params = { version: last(versions), 0: "dirA" }
       const body = {
         file1: fileA1,
         file2: fileA2
       }
 
-      const { headers } = yield updatePath(this.repo, params, body)
-      const version = yield getLatestVersion(this.repo)
+      const { headers } = await updatePath(repo, params, body)
+      const version = await getLatestVersion(repo)
       expect(headers).to.have.property("Git-Commit-Hash", version)
 
-      const response1 = yield getPath(this.repo, { version, 0: "dirA/file1" })
+      const response1 = await getPath(repo, { version, 0: "dirA/file1" })
       expect(response1.body).to.deep.equal(fileA1)
 
-      const response2 = yield getPath(this.repo, { version, 0: "dirA/file2" })
+      const response2 = await getPath(repo, { version, 0: "dirA/file2" })
       expect(response2.body).to.deep.equal(fileA2)
-    }))
+    })
 
-    it("merges parallel changes", co.wrap(function*() {
-      const params = { version: this.versions[1], 0: "dirA" }
+    it("merges parallel changes", async () => {
+      const params = { version: versions[1], 0: "dirA" }
       const body = { file1: newFileA1 }
 
-      const { headers } = yield updatePath(this.repo, params, body)
-      const version = yield getLatestVersion(this.repo)
+      const { headers } = await updatePath(repo, params, body)
+      const version = await getLatestVersion(repo)
       expect(headers).to.have.property("Git-Commit-Hash", version)
 
-      const response = yield getRoot(this.repo, { version })
+      const response = await getRoot(repo, { version })
       expect(response.body).to.deep.equal({
         dirA: {
           file1: newFileA1
@@ -175,28 +174,28 @@ describe("Git JSON API", function() {
           }
         }
       })
-    }))
+    })
 
-    it("returns error for conflicting changes", co.wrap(function*() {
-      const params = { version: this.versions[0], 0: "dirA" }
+    it("returns error for conflicting changes", async () => {
+      const params = { version: versions[0], 0: "dirA" }
       const body = { file1: newFileA1 }
 
       try {
-        yield updatePath(this.repo, params, body)
+        await updatePath(repo, params, body)
         expect.fail()
       } catch (error) {
         expect(error).to.be.an("error").and.to.have.property("message", "Merge conflict")
       }
-    }))
+    })
 
-    it("returns same version when nothing changes", co.wrap(function*() {
-      const version = last(this.versions)
+    it("returns same version when nothing changes", async () => {
+      const version = last(versions)
       const params = { version, 0: "dirA" }
       const body = { file1: fileA1 }
 
-      const { headers } = yield updatePath(this.repo, params, body)
+      const { headers } = await updatePath(repo, params, body)
       expect(headers).to.have.property("Git-Commit-Hash", version)
-    }))
+    })
   })
 })
 
@@ -223,8 +222,8 @@ function createGitFunctions(workingRepoDir, versions) {
   return { git, commit }
 }
 
-function* getLatestVersion(repo) {
-  const { headers } = yield getRoot(repo, { version: "master" })
+async function getLatestVersion(repo) {
+  const { headers } = await getRoot(repo, { version: "master" })
   return headers["Git-Commit-Hash"]
 }
 
