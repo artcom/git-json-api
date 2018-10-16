@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 ### Removed
 - `GET /latest` (use `GET /master` or `GET /master/path` instead and read the version from the `Git-Commit-Hash` header)
+- update internal dependencies
 
 ### Changed
 - `GET /:version` and `GET /:version/path` support using `master` for the version parameter
