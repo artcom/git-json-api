@@ -91,7 +91,7 @@ const objectToTree = async (object, path, repo, schema) => {
     const childPath = `${path}/${key}`
 
     if (isFile(childPath, schema.files)) {
-      const buffer = new Buffer(`${JSON.stringify(object[key], null, 2)}\n`)
+      const buffer = Buffer.from(`${JSON.stringify(object[key], null, 2)}\n`)
       const blobOid = await Git.Blob.createFromBuffer(repo, buffer, buffer.length)
       await builder.insert(`${key}.json`, blobOid, Git.TreeEntry.FILEMODE.BLOB)
     } else {
