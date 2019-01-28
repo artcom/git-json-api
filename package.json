@@ -18,6 +18,7 @@
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "json5": "^2.1.0",
+    "lodash.mapvalues": "^4.6.0",
     "minimatch": "^3.0.4",
     "nodegit": "^0.23.0"
   },

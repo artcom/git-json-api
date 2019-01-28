@@ -1,4 +1,5 @@
 const JSON5 = require("json5")
+const mapValues = require("lodash.mapValues")
 const minimatch = require("minimatch")
 const path = require("path")
 
@@ -51,4 +52,8 @@ exports.response = function(version, body) {
     headers: { "Git-Commit-Hash": version },
     body
   }
+}
+
+exports.removeIndex = function ({ index, ...children }) {
+  return { ...index, ...mapValues(children, child => exports.removeIndex(child)) }
 }

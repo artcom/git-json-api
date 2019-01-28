@@ -1,5 +1,6 @@
 const git = require("nodegit")
 
+const { removeIndex } = require("./actions/helpers")
 const Lock = require("./lock")
 
 const repoLock = new Lock()
@@ -15,7 +16,11 @@ exports.repoHandler = function(uri, callback) {
       Object.keys(headers).forEach(key => res.setHeader(key, headers[key]))
 
       if (body) {
-        res.json(body)
+        if (req.query.index === "false") {
+          res.json(removeIndex(body))
+        } else {
+          res.json(body)
+        }
       } else {
         res.end()
       }
