@@ -75,6 +75,36 @@ Optionally, the previous route can be called with an additional path to a file o
 }
 ```
 
+### `GET /:version[/path]?index=false`
+
+Additionally, a query parameter `index=false` can be attached to receive a transformed json response, which does not include the `index` file keys. This is useful for most client applications that need to process only the pure data.
+
+Response (default):
+
+```
+"directory" : {
+  "index": {
+    "foo": "bar"
+  },
+  "subDirectory": {
+    "index": {
+      "foo": "bar"
+    }
+  }
+}
+```
+
+Response (with `?index=false`):
+
+```
+"directory" : {
+  "foo": "bar",
+  "subDirectory": {
+    "foo": "bar"
+  }
+}
+```
+
 ### `POST /:version/path`
 
 The content of a directory can be modified using a POST request. The body is expected to contain JSON data for all files and subdirectories. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `POST /:version/path`. To ensure consistency, only Git commit hashes are accepted for the version parameter in this case.
