@@ -1,5 +1,5 @@
 const JSON5 = require("json5")
-const mapValues = require("lodash.mapValues")
+const mapValues = require("lodash.mapvalues")
 const minimatch = require("minimatch")
 const path = require("path")
 
