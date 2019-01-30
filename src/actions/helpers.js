@@ -54,6 +54,12 @@ exports.response = function(version, body) {
   }
 }
 
-exports.removeIndex = function ({ index, ...children }) {
-  return { ...index, ...mapValues(children, child => exports.removeIndex(child)) }
+exports.removeIndex = function({ index, ...children }) {
+  return { ...index, ...mapValues(children, child => {
+    if (!Array.isArray(child)) {
+      return exports.removeIndex(child)
+    } else {
+      return child
+    }
+  }) }
 }
