@@ -7,7 +7,8 @@
     "lint": "eslint src test",
     "start": "node src/main.js",
     "test": "mocha",
-    "watch": "nodemon src/main.js | bunyan"
+    "watch": "nodemon src/main.js | bunyan",
+    "debug": "node --inspect-brk src/main.js"
   },
   "engines": {
     "node": "10.13.0"
