@@ -5,29 +5,27 @@ const Lock = require("./lock")
 
 const repoLock = new Lock()
 
-exports.repoHandler = function(uri, callback) {
-  return async (req, res) => {
-    await repoLock.lock()
-    try {
-      const repo = await exports.updateRepo(uri, "./.repo")
-      const { headers, body } = await callback(repo, req.params, req.body)
-      repoLock.unlock()
+exports.repoHandler = (uri, callback) => async (req, res) => {
+  await repoLock.lock()
+  try {
+    const repo = await exports.updateRepo(uri, "./.repo")
+    const { headers, body } = await callback(repo, req.params, req.body)
+    repoLock.unlock()
 
-      Object.keys(headers).forEach(key => res.setHeader(key, headers[key]))
+    Object.keys(headers).forEach(key => res.setHeader(key, headers[key]))
 
-      if (body) {
-        if (req.query.index === "false") {
-          res.json(removeIndex(body))
-        } else {
-          res.json(body)
-        }
+    if (body) {
+      if (req.query.index === "false") {
+        res.json(removeIndex(body))
       } else {
-        res.end()
+        res.json(body)
       }
-    } catch (error) {
-      repoLock.unlock()
-      res.status(500).json({ error: error.message })
+    } else {
+      res.end()
     }
+  } catch (error) {
+    repoLock.unlock()
+    res.status(500).json({ error: error.message })
   }
 }
 
@@ -42,7 +40,7 @@ exports.updateRepo = async (src, path) => {
   return repo
 }
 
-const getRepo = async (src, path) => {
+async function getRepo(src, path) {
   try {
     return await git.Repository.open(path)
   } catch (error) {

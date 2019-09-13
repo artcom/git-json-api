@@ -14,23 +14,23 @@
     "node": "10.13.0"
   },
   "dependencies": {
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.19.0",
     "bunyan": "^1.8.12",
     "cors": "^2.8.5",
-    "express": "^4.16.4",
+    "express": "^4.17.1",
     "json5": "^2.1.0",
     "lodash.mapvalues": "^4.6.0",
     "minimatch": "^3.0.4",
-    "nodegit": "^0.23.0"
+    "nodegit": "^0.26.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "eslint": "^5.9.0",
-    "eslint-config-artcom": "^0.9.2",
-    "eslint-plugin-import": "^2.14.0",
+    "eslint": "^6.3.0",
+    "eslint-config-artcom": "^0.10.1",
+    "eslint-plugin-import": "^2.18.2",
     "mkdirp": "^0.5.1",
-    "mocha": "^5.2.0",
-    "nodemon": "^1.18.7",
-    "tmp": "^0.0.33"
+    "mocha": "^6.2.0",
+    "nodemon": "^1.19.2",
+    "tmp": "^0.1.0"
   }
 }

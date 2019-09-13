@@ -24,7 +24,7 @@ module.exports = async (repo, params, data) => {
   }
 }
 
-const createNewTree = async (repo, parentTree, data, path) => {
+async function createNewTree(repo, parentTree, data, path) {
   const schema = await getSchema(parentTree)
   const newSubTreeOid = await objectToTree(data, path, repo, schema)
 
@@ -35,7 +35,7 @@ const createNewTree = async (repo, parentTree, data, path) => {
   return await Git.Tree.lookup(repo, newTreeOid)
 }
 
-const createCommit = async (repo, parentCommit, masterCommit, tree, message) => {
+async function createCommit(repo, parentCommit, masterCommit, tree, message) {
   const signature = createSignature()
 
   if (parentCommit.sha() === masterCommit.sha()) {
@@ -84,7 +84,7 @@ function createSignature() {
   )
 }
 
-const objectToTree = async (object, path, repo, schema) => {
+async function objectToTree(object, path, repo, schema) {
   const builder = await Git.Treebuilder.create(repo, null)
 
   for (const key of Object.keys(object)) {
@@ -103,7 +103,7 @@ const objectToTree = async (object, path, repo, schema) => {
   return builder.write()
 }
 
-const pushToOrigin = async repo => {
+async function pushToOrigin(repo) {
   const remote = await repo.getRemote("origin")
   const errorCode = await remote.push("refs/heads/master:refs/heads/master")
 

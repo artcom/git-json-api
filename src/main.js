@@ -20,5 +20,5 @@ app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
 app.use("/", routes(repoUri))
 
 app.listen(port, () => {
-  log.info({ port }, "git-json-api up and running")
+  log.info({ port }, "Up and running")
 })

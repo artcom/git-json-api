@@ -11,9 +11,7 @@ exports.getSchema = async tree => {
   return JSON5.parse(blob.content())
 }
 
-exports.isFile = function(path, files) {
-  return files.some(glob => minimatch(path, glob))
-}
+exports.isFile = (filePath, files) => files.some(glob => minimatch(filePath, glob))
 
 exports.treeToObject = async tree => {
   const result = {}
@@ -47,19 +45,17 @@ exports.getVersion = async (repo, version) => {
   }
 }
 
-exports.response = function(version, body) {
-  return {
-    headers: { "Git-Commit-Hash": version },
-    body
-  }
-}
+exports.response = (version, body) => ({
+  headers: { "Git-Commit-Hash": version },
+  body
+})
 
-exports.removeIndex = function({ index, ...children }) {
-  return { ...index, ...mapValues(children, child => {
+exports.removeIndex = ({ index, ...children }) => ({
+  ...index, ...mapValues(children, child => {
     if (!Array.isArray(child)) {
       return exports.removeIndex(child)
     } else {
       return child
     }
-  }) }
-}
+  })
+})

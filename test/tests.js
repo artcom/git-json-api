@@ -25,12 +25,13 @@ const fileA1 = {
 
 const fileBx = ["one", "two", "three"]
 
-let repo = null
-
-// versions contains all commit hashes
-let versions = []
 
 describe("Git JSON API", function() {
+  let repo = null
+
+  // versions contains all commit hashes
+  let versions = []
+
   beforeEach(async () => {
     // workingRepo is used to push test data into the bare originRepo
     const workingRepoDir = createTempDir()
