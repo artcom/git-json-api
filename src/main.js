@@ -3,6 +3,7 @@ const bunyan = require("bunyan")
 const cors = require("cors")
 const express = require("express")
 
+const Repo = require("./repo")
 const routes = require("./routes")
 
 const app = express()
@@ -15,9 +16,12 @@ if (!repoUri) {
   process.exit(1)
 }
 
+const repo = new Repo(repoUri, "./.repo")
+repo.init()
+
 app.use(bodyParser.json({ limit: process.env.BODY_SIZE_LIMIT || "100kb" }))
 app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
-app.use("/", routes(repoUri))
+app.use("/", routes(repo))
 
 app.listen(port, () => {
   log.info({ port }, "Up and running")

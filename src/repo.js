@@ -1,49 +1,73 @@
+const get = require("lodash.get")
 const git = require("nodegit")
+const JSON5 = require("json5")
 
-const { removeIndex } = require("./actions/helpers")
 const Lock = require("./lock")
 
-const repoLock = new Lock()
+module.exports = class Repo {
+  constructor(uri, path) {
+    this.uri = uri
+    this.path = path
+    this.handle = null
+    this.currentCommitHash = null
+    this.currentData = null
+    this.lock = new Lock()
+  }
 
-exports.repoHandler = (uri, callback) => async (req, res) => {
-  await repoLock.lock()
-  try {
-    const repo = await exports.updateRepo(uri, "./.repo")
-    const { headers, body } = await callback(repo, req.params, req.body)
-    repoLock.unlock()
-
-    Object.keys(headers).forEach(key => res.setHeader(key, headers[key]))
-
-    if (body) {
-      if (req.query.index === "false") {
-        res.json(removeIndex(body))
-      } else {
-        res.json(body)
-      }
-    } else {
-      res.end()
+  async init() {
+    try {
+      this.handle = await git.Repository.open(this.path)
+    } catch (error) {
+      this.handle = await git.Clone.clone(this.uri, this.path, { bare: 1 })
     }
-  } catch (error) {
-    repoLock.unlock()
-    res.status(500).json({ error: error.message })
+  }
+
+  async getData(reference, path = "") {
+    await this.lock.lock()
+
+    await this.handle.fetch("origin")
+    const commit = await getCommit(this.handle, reference)
+
+    if (commit.sha() !== this.currentCommitHash) {
+      const tree = await commit.getTree()
+      this.data = await treeToObject(tree)
+      this.currentCommitHash = commit.sha()
+    }
+
+    this.lock.unlock()
+
+    if (path) {
+      return { commitHash: commit.sha(), data: get(this.data, path.split("/")) }
+    } else {
+      return { commitHash: commit.sha(), data: this.data }
+    }
   }
 }
 
-exports.updateRepo = async (src, path) => {
-  const repo = await getRepo(src, path)
-  await repo.fetch("origin")
-
-  const master = await repo.getBranch("master")
-  const commit = await repo.getReferenceCommit("refs/remotes/origin/master")
-  await master.setTarget(commit.id(), "reset master to origin/master")
-
-  return repo
-}
-
-async function getRepo(src, path) {
+async function getCommit(repo, reference) {
   try {
-    return await git.Repository.open(path)
+    return await repo.getReferenceCommit(reference)
   } catch (error) {
-    return await git.Clone.clone(src, path, { bare: 1 })
+    return await repo.getCommit(reference)
   }
+}
+
+async function treeToObject(tree) {
+  const result = {}
+
+  for (const entry of tree.entries()) {
+    if (entry.isFile() && entry.name().endsWith(".json")) {
+      const baseFilename = entry.name().slice(0, -5)
+      result[baseFilename] = await fileToObject(entry)
+    } else if (entry.isTree()) {
+      result[entry.name()] = await treeToObject(await entry.getTree())
+    }
+  }
+
+  return result
+}
+
+async function fileToObject(entry) {
+  const blob = await entry.getBlob()
+  return JSON5.parse(blob.content())
 }

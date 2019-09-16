@@ -1,96 +1,117 @@
-const { expect } = require("chai")
 const { execFileSync } = require("child_process")
 const { writeFileSync } = require("fs")
 const mkdirp = require("mkdirp")
 const path = require("path")
 const tmp = require("tmp")
 
-const getPath = require("../src/actions/getPath")
-const getRoot = require("../src/actions/getRoot")
-const updatePath = require("../src/actions/updatePath")
+const getData = require("../src/getData")
+const updatePath = require("../src/updatePath")
 
-const { updateRepo } = require("../src/repo")
+const Repo = require("../src/repo")
 
-const schema = {
-  files: [
-    "dirA/*",
-    "dirB/*/file"
-  ]
+const rootFile = {
+  foo: "bar",
+  number: { baz: "foo" }
 }
 
-const fileA1 = {
+const nestedFile1 = {
   foo: "bar",
   number: 1
 }
 
-const fileBx = ["one", "two", "three"]
+const nestedFile2 = ["one", "two", "three"]
 
 
-describe("Git JSON API", function() {
+describe("Git JSON API", function () {
   let repo = null
-
-  // versions contains all commit hashes
   let versions = []
 
   beforeEach(async () => {
-    // workingRepo is used to push test data into the bare originRepo
-    const workingRepoDir = createTempDir()
-    const originRepoDir = createTempDir()
+    versions = []
 
-    // cloneRepo is the local clone of originRepo used by the API
-    const cloneRepoDir = createTempDir()
+    const originRepoDir = createTempDir() // bare origin repo
+    const workingRepoDir = createTempDir() // used to push test data into the bare origin repo
+    const cloneRepoDir = createTempDir() // local clone of originRepo used by the API
 
     // create helper functions
-    versions = []
     const { git, commit } = createGitFunctions(workingRepoDir, versions)
 
     git("init", "--bare", originRepoDir)
     git("clone", originRepoDir, workingRepoDir)
 
-    commit("schema.json", schema)
-    commit("dirA/file1.json", fileA1)
+    commit("rootFile.json", rootFile)
+    commit("dir/nestedFile1.json", nestedFile1)
     git("push", "origin", "master")
-    repo = await updateRepo(originRepoDir, cloneRepoDir)
-    commit("dirB/x/file.json", fileBx)
+
+    commit("dir/nestedFile2.json", nestedFile2)
     git("push", "origin", "master")
-    repo = await updateRepo(originRepoDir, cloneRepoDir)
+
+    repo = new Repo(originRepoDir, cloneRepoDir)
+    await repo.init()
   })
 
-  describe("getRoot", function() {
-    it("returns complete JSON data for latest version", async () => {
-      const { body, headers } = await getRoot(repo, { version: "master" })
+  describe("getData", function () {
+    test.only("returns complete data for master", async () => {
+      const { commitHash, data } = await repo.getData("master")
 
-      expect(body).to.deep.equal({
-        dirA: {
-          file1: fileA1
+      expect(commitHash).toBe(last(versions))
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
         },
-        dirB: {
-          x: {
-            file: fileBx
+        dir: {
+          "nestedFile1": {
+            foo: "bar",
+            number: 1
+          },
+          "nestedFile2": ["one", "two", "three"]
+        }
+      })
+    })
+
+    test.only("returns data of root file", async () => {
+      const { commitHash, data } = await repo.getData("master", "rootFile")
+
+      expect(commitHash).toBe(last(versions))
+      expect(data).toEqual({
+        foo: "bar",
+        number: { baz: "foo" }
+      })
+    })
+
+    test.only("returns data of a nested file", async () => {
+      const { commitHash, data } = await repo.getData("master", "dir/nestedFile1")
+
+      expect(commitHash).toBe(last(versions))
+      expect(data).toEqual({
+        foo: "bar",
+        number: 1
+      })
+    })
+
+    test.only("returns complete JSON data for older version", async () => {
+      const { commitHash, data } = await repo.getData(versions[1])
+      console.log(JSON.stringify(versions))
+      expect(commitHash).toBe(versions[1])
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
+        },
+        dir: {
+          "nestedFile1": {
+            foo: "bar",
+            number: 1
           }
         }
       })
-
-      expect(headers).to.have.property("Git-Commit-Hash", last(versions))
-    })
-
-    it("returns complete JSON data for older version", async () => {
-      const version = versions[1]
-      const { body, headers } = await getRoot(repo, { version })
-
-      expect(body).to.deep.equal({
-        dirA: {
-          file1: fileA1
-        }
-      })
-
-      expect(headers).to.have.property("Git-Commit-Hash", version)
     })
   })
 
-  describe("getPath", function() {
-    it("returns content of a directory", async () => {
-      const { body, headers } = await getPath(repo, { version: "master", 0: "dirA" })
+  describe("getData", function () {
+    test("returns content of a directory", async () => {
+      const { body, headers } = await getData(repo, { version: "master", 0: "dirA" })
 
       expect(body).to.deep.equal({
         file1: fileA1
@@ -99,8 +120,8 @@ describe("Git JSON API", function() {
       expect(headers).to.have.property("Git-Commit-Hash", last(versions))
     })
 
-    it("returns content of a nested directory", async () => {
-      const { body, headers } = await getPath(repo, { version: "master", 0: "dirB/x" })
+    test("returns content of a nested directory", async () => {
+      const { body, headers } = await getData(repo, { version: "master", 0: "dirB/x" })
 
       expect(body).to.deep.equal({
         file: fileBx
@@ -109,17 +130,17 @@ describe("Git JSON API", function() {
       expect(headers).to.have.property("Git-Commit-Hash", last(versions))
     })
 
-    it("returns content of a file", async () => {
+    test("returns content of a file", async () => {
       const { body, headers } = await getPath(repo, { version: "master", 0: "dirB/x/file" })
       expect(body).to.deep.equal(fileBx)
       expect(headers).to.have.property("Git-Commit-Hash", last(versions))
     })
   })
 
-  describe("updatePath", function() {
+  describe("updatePath", function () {
     const newFileA1 = { foo: "bar", number: 2 }
 
-    it("writes changes to a file", async () => {
+    test("writes changes to a file", async () => {
       const params = { version: last(versions), 0: "dirA" }
       const body = {
         file1: {
@@ -137,7 +158,7 @@ describe("Git JSON API", function() {
       expect(response.body).to.deep.equal(body)
     })
 
-    it("adds a new file", async () => {
+    test("adds a new file", async () => {
       const fileA2 = { more: "content" }
       const params = { version: last(versions), 0: "dirA" }
       const body = {
@@ -156,7 +177,7 @@ describe("Git JSON API", function() {
       expect(response2.body).to.deep.equal(fileA2)
     })
 
-    it("merges parallel changes", async () => {
+    test("merges parallel changes", async () => {
       const params = { version: versions[1], 0: "dirA" }
       const body = { file1: newFileA1 }
 
@@ -177,7 +198,7 @@ describe("Git JSON API", function() {
       })
     })
 
-    it("returns error for conflicting changes", async () => {
+    test("returns error for conflicting changes", async () => {
       const params = { version: versions[0], 0: "dirA" }
       const body = { file1: newFileA1 }
 
@@ -189,7 +210,7 @@ describe("Git JSON API", function() {
       }
     })
 
-    it("returns same version when nothing changes", async () => {
+    test("returns same version when nothing changes", async () => {
       const version = last(versions)
       const params = { version, 0: "dirA" }
       const body = { file1: fileA1 }

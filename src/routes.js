@@ -1,14 +1,12 @@
 const express = require("express")
 
-const { repoHandler } = require("./repo")
+const { requestHandler } = require("./requestHandler")
 
-const getRoot = require("./actions/getRoot")
-const getPath = require("./actions/getPath")
-const updatePath = require("./actions/updatePath")
+const getData = require("./getData")
+const updatePath = require("./updatePath")
 
-module.exports = function routes(repoUri) {
+module.exports = function routes(repo) {
   return new express.Router()
-    .get("/:version", repoHandler(repoUri, getRoot))
-    .get("/:version/*", repoHandler(repoUri, getPath))
-    .post("/:version/*", repoHandler(repoUri, updatePath))
+    .get("/:reference/*", requestHandler(repo, getData))
+    .post("/:reference/*", requestHandler(repo, updatePath))
 }

@@ -1,5 +1,9 @@
 {
-  "extends": "artcom/mocha",
+  "plugins": ["jest"],
+  "env": {
+    "jest/globals": true
+  },
+  "extends": ["plugin:jest/recommended"],
   "rules": {
     "import/no-commonjs": "off"
   }

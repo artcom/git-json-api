@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint src test",
     "start": "node src/main.js",
-    "test": "mocha",
+    "test": "jest",
     "watch": "nodemon src/main.js | bunyan",
     "debug": "node --inspect-brk src/main.js"
   },
@@ -19,6 +19,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "json5": "^2.1.0",
+    "lodash.get": "^4.4.2",
     "lodash.mapvalues": "^4.6.0",
     "minimatch": "^3.0.4",
     "nodegit": "^0.26.0"
@@ -28,6 +29,7 @@
     "eslint": "^6.3.0",
     "eslint-config-artcom": "^0.10.1",
     "eslint-plugin-import": "^2.18.2",
+    "jest": "^24.9.0",
     "mkdirp": "^0.5.1",
     "mocha": "^6.2.0",
     "nodemon": "^1.19.2",
