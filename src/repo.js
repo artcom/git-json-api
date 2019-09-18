@@ -23,33 +23,36 @@ module.exports = class Repo {
   }
 
   async getData(reference, path = "") {
-    await this.lock.lock()
+    try {
+      await this.lock.lock()
 
-    await this.handle.fetch("origin")
-    const commit = await getCommit(this.handle, reference)
+      await this.handle.fetch("origin")
+      const commit = await getCommit(this.handle, reference)
 
-    if (commit.sha() !== this.currentCommitHash) {
-      const tree = await commit.getTree()
-      this.data = await treeToObject(tree)
-      this.currentCommitHash = commit.sha()
-    }
+      if (commit.sha() !== this.currentCommitHash) {
+        const tree = await commit.getTree()
+        this.data = await treeToObject(tree)
+        this.currentCommitHash = commit.sha()
+      }
 
-    this.lock.unlock()
+      this.lock.unlock()
 
-    if (path) {
-      return { commitHash: commit.sha(), data: get(this.data, path.split("/")) }
-    } else {
-      return { commitHash: commit.sha(), data: this.data }
+      if (path) {
+        return { commitHash: commit.sha(), data: get(this.data, path.split("/")) }
+      } else {
+        return { commitHash: commit.sha(), data: this.data }
+      }
+    } catch (error) {
+      this.lock.unlock()
+      throw error
     }
   }
 }
 
 async function getCommit(repo, reference) {
-  try {
-    return await repo.getReferenceCommit(reference)
-  } catch (error) {
-    return await repo.getCommit(reference)
-  }
+  return repo.getReferenceCommit(reference)
+    .catch(() => repo.getCommit(reference))
+    .catch(() => { throw new Error(`Could not find branch or commit '${reference}'`) })
 }
 
 async function treeToObject(tree) {
