@@ -65,7 +65,7 @@ module.exports = class Cache {
 
   getFiles(path) {
     if (path) {
-      return pickBy(this.files, file => file.startsWith(path))
+      return pickBy(this.files, (data, file) => file.startsWith(path))
     } else {
       return this.files
     }
