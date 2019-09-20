@@ -159,6 +159,31 @@ describe("Git JSON API", function () {
       })
     })
 
+    test("returns flatten data for root file", async () => {
+      const { commitHash, data } = await repo.getData("master", true, "rootFile")
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
+        }
+      })
+    })
+
+    test("returns flatten data for nested files", async () => {
+      const { commitHash, data } = await repo.getData("master", true, "dir")
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual({
+        "dir/nestedFile1": {
+          foo: "bar",
+          number: 1
+        },
+        "dir/nestedFile2": ["one", "two", "three"]
+      })
+    })
+
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", true)
