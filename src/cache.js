@@ -64,7 +64,6 @@ module.exports = class Cache {
   }
 
   getFiles(path) {
-    console.log(JSON.stringify(this.files))
     if (path) {
       return pickBy(this.files, file => file.startsWith(path))
     } else {
