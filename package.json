@@ -21,6 +21,8 @@
     "json5": "^2.1.0",
     "lodash.get": "^4.4.2",
     "lodash.mapvalues": "^4.6.0",
+    "lodash.pickby": "^4.6.0",
+    "lodash.set": "^4.3.2",
     "minimatch": "^3.0.4",
     "nodegit": "^0.26.0"
   },

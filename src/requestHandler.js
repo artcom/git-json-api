@@ -1,6 +1,6 @@
 exports.requesthandler = (repo, callback) => async (req, res) => {
   try {
-    const { headers, body } = await callback(repo, req.params, req.body)
+    const { headers, body } = await callback(repo, req.params, req.query)
 
     Object.keys(headers).forEach(key => res.setHeader(key, headers[key]))
 

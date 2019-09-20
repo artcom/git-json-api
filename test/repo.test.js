@@ -20,40 +20,44 @@ const nestedFile1 = {
 
 const nestedFile2 = ["one", "two", "three"]
 
-
 describe("Git JSON API", function () {
-  let repo = null
-  let versions = []
+  let repo
+  let oldCommitHash
+  let masterCommitHash
+  let branch1CommitHash
 
   beforeEach(async () => {
-    versions = []
-
     const originRepoDir = createTempDir() // bare origin repo
     const workingRepoDir = createTempDir() // used to push test data into the bare origin repo
     const cloneRepoDir = createTempDir() // local clone of originRepo used by the API
 
     // create helper functions
-    const { git, commit } = createGitFunctions(workingRepoDir, versions)
+    const { git, commit } = createGitFunctions(workingRepoDir)
 
     git("init", "--bare", originRepoDir)
     git("clone", originRepoDir, workingRepoDir)
 
     commit("rootFile.json", rootFile)
-    commit("dir/nestedFile1.json", nestedFile1)
+    oldCommitHash = commit("dir/nestedFile1.json", nestedFile1)
     git("push", "origin", "master")
 
-    commit("dir/nestedFile2.json", nestedFile2)
+    masterCommitHash = commit("dir/nestedFile2.json", nestedFile2)
     git("push", "origin", "master")
+
+    git("branch", "branch1")
+    git("checkout", "branch1")
+    branch1CommitHash = commit("dir/nestedFile2.json", [...nestedFile2, "four"])
+    git("push", "origin", "branch1")
 
     repo = new Repo(originRepoDir, cloneRepoDir)
     await repo.init()
   })
 
   describe("getData", function () {
-    test.only("returns complete data for master", async () => {
-      const { commitHash, data } = await repo.getData("master")
+    test("returns complete data for master", async () => {
+      const { commitHash, data } = await repo.getData("master", false)
 
-      expect(commitHash).toBe(last(versions))
+      expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
         "rootFile": {
           foo: "bar",
@@ -69,30 +73,30 @@ describe("Git JSON API", function () {
       })
     })
 
-    test.only("returns data of root file", async () => {
-      const { commitHash, data } = await repo.getData("master", "rootFile")
+    test("returns data of root file", async () => {
+      const { commitHash, data } = await repo.getData("master", false, "rootFile")
 
-      expect(commitHash).toBe(last(versions))
+      expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
         foo: "bar",
         number: { baz: "foo" }
       })
     })
 
-    test.only("returns data of a nested file", async () => {
-      const { commitHash, data } = await repo.getData("master", "dir/nestedFile1")
+    test("returns data of a nested file", async () => {
+      const { commitHash, data } = await repo.getData("master", false, "dir/nestedFile1")
 
-      expect(commitHash).toBe(last(versions))
+      expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
         foo: "bar",
         number: 1
       })
     })
 
-    test.only("returns complete JSON data for older version", async () => {
-      const { commitHash, data } = await repo.getData(versions[1])
+    test("returns complete JSON data for old commit hash", async () => {
+      const { commitHash, data } = await repo.getData(oldCommitHash, false)
 
-      expect(commitHash).toBe(versions[1])
+      expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
         "rootFile": {
           foo: "bar",
@@ -107,9 +111,57 @@ describe("Git JSON API", function () {
       })
     })
 
-    test.only("returns error for invalid branch", () => {
+    test("returns data for branch1", async () => {
+      const { commitHash, data } = await repo.getData("branch1", false, "dir/nestedFile2")
+
+      expect(commitHash).toBe(branch1CommitHash)
+      expect(data).toEqual(["one", "two", "three", "four"])
+    })
+
+    test("returns error for invalid branch", () => {
       expect.assertions(1)
-      return repo.getData("invalid")
+      return repo.getData("invalid", false)
+        .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
+    })
+  })
+
+  describe("getData flatten", function () {
+    test("returns flatten data for master", async () => {
+      const { commitHash, data } = await repo.getData("master", true)
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
+        },
+        "dir/nestedFile1": {
+          foo: "bar",
+          number: 1
+        },
+        "dir/nestedFile2": ["one", "two", "three"]
+      })
+    })
+
+    test("returns flatten data for old commit hash", async () => {
+      const { commitHash, data } = await repo.getData(oldCommitHash, true)
+
+      expect(commitHash).toBe(oldCommitHash)
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
+        },
+        "dir/nestedFile1": {
+          foo: "bar",
+          number: 1
+        }
+      })
+    })
+
+    test("returns error for invalid branch", () => {
+      expect.assertions(1)
+      return repo.getData("invalid", true)
         .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
     })
   })
@@ -118,7 +170,7 @@ describe("Git JSON API", function () {
     return tmp.dirSync({ unsafeCleanup: true }).name
   }
 
-  function createGitFunctions(workingRepoDir, versions) {
+  function createGitFunctions(workingRepoDir) {
     function git(...args) {
       return execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
         .toString()
@@ -131,15 +183,10 @@ describe("Git JSON API", function () {
       writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
       git("add", filePath)
       git("commit", "--message", `Add ${filePath}`)
-      versions.push(git("show-ref", "--hash", "refs/heads/master"))
+      return git("show-ref", "--hash").split("\n")[0]
     }
 
     return { git, commit }
-  }
-
-  async function getLatestVersion(repo) {
-    const { headers } = await getRoot(repo, { version: "master" })
-    return headers["Git-Commit-Hash"]
   }
 
   function last(array) {
