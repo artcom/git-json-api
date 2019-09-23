@@ -1,4 +1,4 @@
-const git = require("nodegit")
+const Git = require("nodegit")
 
 const Cache = require("./cache")
 const Lock = require("./lock")
@@ -14,9 +14,9 @@ module.exports = class Repo {
 
   async init() {
     try {
-      this.repo = await git.Repository.open(this.path)
+      this.repo = await Git.Repository.open(this.path)
     } catch (error) {
-      this.repo = await git.Clone.clone(this.uri, this.path, { bare: 1 })
+      this.repo = await Git.Clone.clone(this.uri, this.path, { bare: 1 })
     }
   }
 
