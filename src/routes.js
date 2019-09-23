@@ -2,15 +2,16 @@ const express = require("express")
 
 module.exports = function routes(repo) {
   return new express.Router()
-    .get("/:reference/*", handleGet)
-    .post("/:reference/*", handlePost)
+    .get("/:version", handleGet)
+    .get("/:version/*", handleGet)
+    .post("/:version/*", handlePost)
 
   async function handleGet({ params, query }, response) {
     try {
       const flatten = query.flatten === "true"
       const path = params[0] || null
 
-      const { commitHash, data } = await repo.getData(params.reference, flatten, path)
+      const { commitHash, data } = await repo.getData(params.version, flatten, path)
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.json(data)

@@ -20,12 +20,12 @@ module.exports = class Repo {
     }
   }
 
-  async getData(reference, flatten, path) {
+  async getData(version, flatten, path) {
     try {
       await this.lock.lock()
 
       await this.repo.fetch("origin")
-      const commit = await getCommit(this.repo, reference)
+      const commit = await getCommit(this.repo, version)
       await this.cache.update(commit)
 
       this.lock.unlock()
@@ -41,8 +41,8 @@ module.exports = class Repo {
   }
 }
 
-async function getCommit(repo, reference) {
-  return repo.getReferenceCommit(`refs/remotes/origin/${reference}`)
-    .catch(() => repo.getCommit(reference))
-    .catch(() => { throw new Error(`Could not find branch or commit '${reference}'`) })
+async function getCommit(repo, version) {
+  return repo.getReferenceCommit(`refs/remotes/origin/${version}`)
+    .catch(() => repo.getCommit(version))
+    .catch(() => { throw new Error(`Could not find branch or commit '${version}'`) })
 }
