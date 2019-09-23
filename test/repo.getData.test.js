@@ -1,10 +1,6 @@
-const { execFileSync } = require("child_process")
-const { writeFileSync } = require("fs")
-const mkdirp = require("mkdirp")
-const path = require("path")
-const tmp = require("tmp")
-
 const Repo = require("../src/repo")
+
+const { createGitFunctions, createTempDir } = require("./helpers")
 
 const rootFile = {
   foo: "bar",
@@ -124,7 +120,7 @@ describe("Git JSON API", function () {
   })
 
   describe("getData flatten", function () {
-    test("returns flatten data for master", async () => {
+    test("returns  files for master", async () => {
       const { commitHash, data } = await repo.getData("master", true)
 
       expect(commitHash).toBe(masterCommitHash)
@@ -141,7 +137,7 @@ describe("Git JSON API", function () {
       })
     })
 
-    test("returns flatten data for old commit hash", async () => {
+    test("returns files for old commit hash", async () => {
       const { commitHash, data } = await repo.getData(oldCommitHash, true)
 
       expect(commitHash).toBe(oldCommitHash)
@@ -157,19 +153,14 @@ describe("Git JSON API", function () {
       })
     })
 
-    test("returns flatten data for root file", async () => {
+    test("returns no file for file query", async () => {
       const { commitHash, data } = await repo.getData("master", true, "rootFile")
 
       expect(commitHash).toBe(masterCommitHash)
-      expect(data).toEqual({
-        "rootFile": {
-          foo: "bar",
-          number: { baz: "foo" }
-        }
-      })
+      expect(data).toEqual({})
     })
 
-    test("returns flatten data for nested files", async () => {
+    test("returns files for directory query", async () => {
       const { commitHash, data } = await repo.getData("master", true, "dir")
 
       expect(commitHash).toBe(masterCommitHash)
@@ -188,31 +179,4 @@ describe("Git JSON API", function () {
         .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
     })
   })
-
-  function createTempDir() {
-    return tmp.dirSync({ unsafeCleanup: true }).name
-  }
-
-  function createGitFunctions(workingRepoDir) {
-    function git(...args) {
-      return execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
-        .toString()
-        .trim()
-    }
-
-    function commit(filePath, content) {
-      const absPath = path.join(workingRepoDir, filePath)
-      mkdirp.sync(path.dirname(absPath))
-      writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
-      git("add", filePath)
-      git("commit", "--message", `Add ${filePath}`)
-      return git("show-ref", "--hash").split("\n")[0]
-    }
-
-    return { git, commit }
-  }
-
-  function last(array) {
-    return array[array.length - 1]
-  }
 })
