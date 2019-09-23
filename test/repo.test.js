@@ -4,8 +4,6 @@ const mkdirp = require("mkdirp")
 const path = require("path")
 const tmp = require("tmp")
 
-const getData = require("../src/getData")
-
 const Repo = require("../src/repo")
 
 const rootFile = {

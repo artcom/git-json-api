@@ -20,7 +20,7 @@ module.exports = class Repo {
     }
   }
 
-  async getData(reference, flatten, path = null) {
+  async getData(reference, flatten, path) {
     try {
       await this.lock.lock()
 
