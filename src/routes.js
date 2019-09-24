@@ -8,10 +8,10 @@ module.exports = function routes(repo) {
 
   async function handleGet({ params, query }, response) {
     try {
-      const flatten = query.flatten === "true"
-      const path = params[0] || null
+      const listFiles = query.listFiles === "true"
+      const path = params[0] || ""
 
-      const { commitHash, data } = await repo.getData(params.version, flatten, path)
+      const { commitHash, data } = await repo.getData(params.version, listFiles, path)
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.json(data)
@@ -22,9 +22,9 @@ module.exports = function routes(repo) {
 
   async function handlePost({ body, params }, response) {
     try {
-      const reference = params[0]
+      const path = params[0] || ""
 
-      const commitHash = await repo.updateData(reference, body)
+      const commitHash = await repo.updateData(params.version, body, path)
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.end()

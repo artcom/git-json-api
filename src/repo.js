@@ -20,7 +20,7 @@ module.exports = class Repo {
     }
   }
 
-  async getData(version, flatten, path) {
+  async getData(version, listFiles, path) {
     try {
       await this.lock.lock()
 
@@ -32,7 +32,7 @@ module.exports = class Repo {
 
       return {
         commitHash: this.cache.getCommitHash(),
-        data: flatten ? this.cache.getFiles(path) : this.cache.getObject(path)
+        data: listFiles ? this.cache.getFiles(path) : this.cache.getObject(path)
       }
     } catch (error) {
       this.lock.unlock()

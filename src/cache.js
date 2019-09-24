@@ -56,7 +56,7 @@ module.exports = class Cache {
   }
 
   getObject(path) {
-    if (path) {
+    if (path.length > 0) {
       return get(this.object, path.split("/"))
     } else {
       return this.object
@@ -64,7 +64,7 @@ module.exports = class Cache {
   }
 
   getFiles(path) {
-    if (path) {
+    if (path.length > 0) {
       return pickBy(this.files, (data, file) => file.startsWith(path) && file !== path)
     } else {
       return this.files

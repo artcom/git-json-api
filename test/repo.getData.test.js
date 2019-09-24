@@ -49,7 +49,7 @@ describe("Git JSON API", function () {
 
   describe("getData", function () {
     test("returns complete data for master", async () => {
-      const { commitHash, data } = await repo.getData("master", false)
+      const { commitHash, data } = await repo.getData("master", false, "")
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -88,7 +88,7 @@ describe("Git JSON API", function () {
     })
 
     test("returns complete JSON data for old commit hash", async () => {
-      const { commitHash, data } = await repo.getData(oldCommitHash, false)
+      const { commitHash, data } = await repo.getData(oldCommitHash, false, "")
 
       expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
@@ -114,14 +114,14 @@ describe("Git JSON API", function () {
 
     test("returns error for invalid branch", () => {
       expect.assertions(1)
-      return repo.getData("invalid", false)
+      return repo.getData("invalid", false, "")
         .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
     })
   })
 
   describe("getData flatten", function () {
     test("returns  files for master", async () => {
-      const { commitHash, data } = await repo.getData("master", true)
+      const { commitHash, data } = await repo.getData("master", true, "")
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -138,7 +138,7 @@ describe("Git JSON API", function () {
     })
 
     test("returns files for old commit hash", async () => {
-      const { commitHash, data } = await repo.getData(oldCommitHash, true)
+      const { commitHash, data } = await repo.getData(oldCommitHash, true, "")
 
       expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
