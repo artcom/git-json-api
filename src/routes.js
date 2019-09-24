@@ -11,7 +11,7 @@ module.exports = function routes(repo) {
       const listFiles = query.listFiles === "true"
       const path = params[0] || ""
 
-      const { commitHash, data } = await repo.getData(params.version, listFiles, path)
+      const { commitHash, data } = await repo.getData(params.version, path, listFiles)
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.json(data)

@@ -49,7 +49,7 @@ describe("Get Data", function () {
 
   describe("JSON object", function () {
     test("returns complete data for master", async () => {
-      const { commitHash, data } = await repo.getData("master", false, "")
+      const { commitHash, data } = await repo.getData("master", "", false)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -68,7 +68,7 @@ describe("Get Data", function () {
     })
 
     test("returns data of root file", async () => {
-      const { commitHash, data } = await repo.getData("master", false, "rootFile")
+      const { commitHash, data } = await repo.getData("master", "rootFile", false)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -78,7 +78,7 @@ describe("Get Data", function () {
     })
 
     test("returns data of a nested file", async () => {
-      const { commitHash, data } = await repo.getData("master", false, "dir/nestedFile1")
+      const { commitHash, data } = await repo.getData("master", "dir/nestedFile1", false)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -88,7 +88,7 @@ describe("Get Data", function () {
     })
 
     test("returns complete JSON data for old commit hash", async () => {
-      const { commitHash, data } = await repo.getData(oldCommitHash, false, "")
+      const { commitHash, data } = await repo.getData(oldCommitHash, "", false)
 
       expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
@@ -106,7 +106,7 @@ describe("Get Data", function () {
     })
 
     test("returns data for branch1", async () => {
-      const { commitHash, data } = await repo.getData("branch1", false, "dir/nestedFile2")
+      const { commitHash, data } = await repo.getData("branch1", "dir/nestedFile2", false)
 
       expect(commitHash).toBe(branch1CommitHash)
       expect(data).toEqual(["one", "two", "three", "four"])
@@ -114,14 +114,14 @@ describe("Get Data", function () {
 
     test("returns error for invalid branch", () => {
       expect.assertions(1)
-      return repo.getData("invalid", false, "")
+      return repo.getData("invalid", "", false)
         .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
     })
   })
 
   describe("List files", function () {
     test("returns files for master", async () => {
-      const { commitHash, data } = await repo.getData("master", true, "")
+      const { commitHash, data } = await repo.getData("master", "", true)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -138,7 +138,7 @@ describe("Get Data", function () {
     })
 
     test("returns files for old commit hash", async () => {
-      const { commitHash, data } = await repo.getData(oldCommitHash, true, "")
+      const { commitHash, data } = await repo.getData(oldCommitHash, "", true)
 
       expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
@@ -154,14 +154,14 @@ describe("Get Data", function () {
     })
 
     test("returns no file for file query", async () => {
-      const { commitHash, data } = await repo.getData("master", true, "rootFile")
+      const { commitHash, data } = await repo.getData("master", "rootFile", true)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({})
     })
 
     test("returns files for directory query", async () => {
-      const { commitHash, data } = await repo.getData("master", true, "dir")
+      const { commitHash, data } = await repo.getData("master", "dir", true)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
@@ -175,7 +175,7 @@ describe("Get Data", function () {
 
     test("returns error for invalid branch", () => {
       expect.assertions(1)
-      return repo.getData("invalid", true)
+      return repo.getData("invalid", "", true)
         .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
     })
   })

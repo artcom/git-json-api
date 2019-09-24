@@ -20,7 +20,7 @@ module.exports = class Repo {
     }
   }
 
-  async getData(version, listFiles, path) {
+  async getData(version, path, listFiles) {
     try {
       await this.lock.lock()
 
@@ -38,6 +38,10 @@ module.exports = class Repo {
       this.lock.unlock()
       throw error
     }
+  }
+
+  async updateData(parentCommitHash, branch, files, path) {
+
   }
 }
 
