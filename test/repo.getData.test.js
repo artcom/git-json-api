@@ -14,7 +14,7 @@ const nestedFile1 = {
 
 const nestedFile2 = ["one", "two", "three"]
 
-describe("Git JSON API", function () {
+describe("Get Data", function () {
   let repo
   let oldCommitHash
   let masterCommitHash
@@ -47,7 +47,7 @@ describe("Git JSON API", function () {
     await repo.init()
   })
 
-  describe("getData", function () {
+  describe("JSON object", function () {
     test("returns complete data for master", async () => {
       const { commitHash, data } = await repo.getData("master", false, "")
 
@@ -119,8 +119,8 @@ describe("Git JSON API", function () {
     })
   })
 
-  describe("getData flatten", function () {
-    test("returns  files for master", async () => {
+  describe("List files", function () {
+    test("returns files for master", async () => {
       const { commitHash, data } = await repo.getData("master", true, "")
 
       expect(commitHash).toBe(masterCommitHash)
