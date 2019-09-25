@@ -99,46 +99,4 @@ describe("Update Data", function () {
       "dir/nestedFile1": { foo: "baz" }
     })
   })
-
-  //   test("merges parallel changes", async () => {
-  //     const params = { version: versions[1], 0: "dirA" }
-  //     const body = { file1: newFileA1 }
-
-  //     const { headers } = await updatePath(repo, params, body)
-  //     const version = await getLatestVersion(repo)
-  //     expect(headers).to.have.property("Git-Commit-Hash", version)
-
-  //     const response = await getRoot(repo, { version })
-  //     expect(response.body).to.deep.equal({
-  //       dirA: {
-  //         file1: newFileA1
-  //       },
-  //       dirB: {
-  //         x: {
-  //           file: fileBx
-  //         }
-  //       }
-  //     })
 })
-
-  //   test("returns error for conflicting changes", async () => {
-  //     const params = { version: versions[0], 0: "dirA" }
-  //     const body = { file1: newFileA1 }
-
-  //     try {
-  //       await updatePath(repo, params, body)
-  //       expect.fail()
-  //     } catch (error) {
-  //       expect(error).to.be.an("error").and.to.have.property("message", "Merge conflict")
-  //     }
-  //   })
-
-  //   test("returns same version when nothing changes", async () => {
-  //     const version = last(versions)
-  //     const params = { version, 0: "dirA" }
-  //     const body = { file1: fileA1 }
-
-  //     const { headers } = await updatePath(repo, params, body)
-  //     expect(headers).to.have.property("Git-Commit-Hash", version)
-  //   })
-  // })

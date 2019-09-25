@@ -51,7 +51,7 @@ module.exports = class Repo {
 
       const fqPath = `${this.repo.workdir().slice(0, -1)}/${path}`
       rimraf.sync(`${fqPath}/*`)
-      console.log(fqPath)
+
       for (const file of Object.keys(files)) {
         fse.outputJsonSync(`${fqPath}/${file}.json`, files[file], { spaces: 2 })
       }
