@@ -1,11 +1,9 @@
 const { execFileSync } = require("child_process")
-const { writeFileSync } = require("fs")
-const mkdirp = require("mkdirp")
-const path = require("path")
+const fse = require("fs-extra")
 const tmp = require("tmp")
 
 module.exports.createTempDir = () => {
-  return tmp.dirSync({ unsafeCleanup: true }).name
+  return tmp.dirSync().name
 }
 
 module.exports.createGitFunctions = (workingRepoDir) => {
@@ -16,9 +14,7 @@ module.exports.createGitFunctions = (workingRepoDir) => {
   }
 
   function commit(filePath, content) {
-    const absPath = path.join(workingRepoDir, filePath)
-    mkdirp.sync(path.dirname(absPath))
-    writeFileSync(absPath, `${JSON.stringify(content, null, 2)}\n`)
+    fse.outputJsonSync(`${workingRepoDir}/${filePath}`, content, { spaces: 2 })
     git("add", filePath)
     git("commit", "--message", `Add ${filePath}`)
     return git("show-ref", "--hash").split("\n")[0]

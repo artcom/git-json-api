@@ -87,6 +87,19 @@ describe("Get Data", function () {
       })
     })
 
+    test("returns data of a directory", async () => {
+      const { commitHash, data } = await repo.getData("master", "dir", false)
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual({
+        "nestedFile1": {
+          foo: "bar",
+          number: 1
+        },
+        "nestedFile2": ["one", "two", "three"]
+      })
+    })
+
     test("returns complete JSON data for old commit hash", async () => {
       const { commitHash, data } = await repo.getData(oldCommitHash, "", false)
 
@@ -165,11 +178,11 @@ describe("Get Data", function () {
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
-        "dir/nestedFile1": {
+        "nestedFile1": {
           foo: "bar",
           number: 1
         },
-        "dir/nestedFile2": ["one", "two", "three"]
+        "nestedFile2": ["one", "two", "three"]
       })
     })
 

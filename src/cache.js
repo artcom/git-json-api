@@ -1,7 +1,8 @@
-const get = require("lodash.get")
 const JSON5 = require("json5")
-const set = require("lodash.set")
+const get = require("lodash.get")
+const mapKeys = require("lodash.mapkeys")
 const pickBy = require("lodash.pickby")
+const set = require("lodash.set")
 
 module.exports = class Cache {
   constructor() {
@@ -65,7 +66,8 @@ module.exports = class Cache {
 
   getFiles(path) {
     if (path.length > 0) {
-      return pickBy(this.files, (data, file) => file.startsWith(path) && file !== path)
+      const files = pickBy(this.files, (data, file) => file.startsWith(path) && file !== path)
+      return mapKeys(files, (data, file) => file.substr(path.length + 1))
     } else {
       return this.files
     }
