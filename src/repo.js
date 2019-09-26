@@ -47,27 +47,14 @@ module.exports = class Repo {
       await this.lock.lock()
 
       const parentCommit = await this.repo.getCommit(parentCommitHash)
-      await Git.Reset.reset(this.repo, parentCommit, 3, {})
-
-      const fqPath = `${this.repo.workdir().slice(0, -1)}/${path}`
-      rimraf.sync(`${fqPath}/*`)
-
-      for (const file of Object.keys(files)) {
-        fse.outputJsonSync(`${fqPath}/${file}.json`, files[file], { spaces: 2 })
-      }
-
-      const index = await this.repo.refreshIndex()
-      await index.addAll()
-      await index.write()
-      const newTreeOid = await index.writeTree()
-
+      const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
       const branchCommit = await this.repo.getReferenceCommit(`refs/remotes/origin/${branch}`)
-      const commitOid = await createCommit(this.repo, parentCommit, branchCommit, newTreeOid, `Update ${path}`)
+      const commitHash = await createCommit(this.repo, parentCommit, branchCommit, newTreeOid, `Update directory /${path}`)
       await pushHeadToOriginBranch(this.repo, branch)
 
       this.lock.unlock()
 
-      return (await this.repo.getCommit(commitOid)).sha()
+      return commitHash
     } catch (error) {
       this.lock.unlock()
       throw error
@@ -79,6 +66,22 @@ async function getCommit(repo, version) {
   return repo.getReferenceCommit(`refs/remotes/origin/${version}`)
     .catch(() => repo.getCommit(version))
     .catch(() => { throw new Error(`Could not find branch or commit '${version}'`) })
+}
+
+async function writeFiles(repo, parentCommit, path, files) {
+  await Git.Reset.reset(repo, parentCommit, 3, {})
+
+  const fqPath = `${repo.workdir().slice(0, -1)}/${path}`
+  rimraf.sync(`${fqPath}/*`)
+
+  for (const file of Object.keys(files)) {
+    fse.outputJsonSync(`${fqPath}/${file}.json`, files[file], { spaces: 2 })
+  }
+
+  const index = await repo.refreshIndex()
+  await index.addAll()
+  await index.write()
+  return await index.writeTree()
 }
 
 async function createCommit(repo, parentCommit, branchCommit, treeOid, message) {
@@ -94,22 +97,28 @@ async function createCommit(repo, parentCommit, branchCommit, treeOid, message) 
   )
 
   const commit = await repo.getCommit(commitOid)
-  const index = await Git.Merge.commits(repo, branchCommit, commit)
 
-  if (index.hasConflicts()) {
-    throw new Error("Merge conflict")
+  if (branchCommit.sha() === parentCommit.sha()) {
+    return commit.sha()
+  } else {
+    const index = await Git.Merge.commits(repo, branchCommit, commit)
+    if (index.hasConflicts()) {
+      throw new Error("Merge conflict")
+    }
+
+    const mergeTreeOid = await index.writeTreeTo(repo)
+    const mergeCommitOid = await repo.createCommit(
+      "HEAD",
+      signature,
+      signature,
+      "Merge",
+      mergeTreeOid,
+      [commit, branchCommit]
+    )
+
+    const mergeCommit = await repo.getCommit(mergeCommitOid)
+    return mergeCommit.sha()
   }
-
-  const mergeTreeOid = await index.writeTreeTo(repo)
-
-  return await repo.createCommit(
-    "HEAD",
-    signature,
-    signature,
-    "Merge",
-    mergeTreeOid,
-    [commit, branchCommit]
-  )
 }
 
 function createSignature() {
@@ -120,10 +129,20 @@ function createSignature() {
 }
 
 async function pushHeadToOriginBranch(repo, branch) {
-  const remote = await repo.getRemote("origin")
-  const errorCode = await remote.push(`HEAD:refs/heads/${branch}`)
+  console.log(branch)
 
-  if (errorCode) {
-    throw new Error(errorCode)
+  const remote = await repo.getRemote("origin")
+  await remote.push(`HEAD:refs/heads/${branch}`, null, cb)
+
+  // remote.push() does not reject nor return an error code which is a bug
+  // therefore we check the new commits manually
+  const headCommit = await repo.getReferenceCommit("HEAD")
+  const remoteCommit = await repo.getReferenceCommit(`refs/remotes/origin/${branch}`)
+
+  if (headCommit.sha() !== remoteCommit.sha()) {
+    throw new Error("Could not push to remote")
   }
+}
+function cb(...params) {
+  console.log(params)
 }
