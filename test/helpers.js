@@ -2,11 +2,9 @@ const { execFileSync } = require("child_process")
 const fse = require("fs-extra")
 const tmp = require("tmp")
 
-module.exports.createTempDir = () => {
-  return tmp.dirSync().name
-}
+module.exports.createTempDir = () => tmp.dirSync().name
 
-module.exports.createGitFunctions = (workingRepoDir) => {
+module.exports.createGitFunctions = workingRepoDir => {
   function git(...args) {
     return execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })
       .toString()

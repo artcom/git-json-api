@@ -47,10 +47,10 @@ module.exports = class Repo {
       await this.lock.lock()
 
       const parentCommit = await this.repo.getCommit(parentCommitHash)
-      const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
       const branchCommit = await this.repo.getReferenceCommit(`refs/remotes/origin/${branch}`)
-      const commitHash = await createCommit(this.repo, parentCommit, branchCommit, newTreeOid, `Update '/${path}'`)
-      await pushHeadToOriginBranch(this.repo, branch)
+      const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
+      const commitHash = await commitAndMerge(this.repo, parentCommit, branchCommit, newTreeOid, `Update '/${path}'`)
+      await pushHeadToOrigin(this.repo, branch)
 
       this.lock.unlock()
 
@@ -84,7 +84,7 @@ async function writeFiles(repo, parentCommit, path, files) {
   return await index.writeTree()
 }
 
-async function createCommit(repo, parentCommit, branchCommit, treeOid, message) {
+async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message) {
   const signature = createSignature()
 
   const commitOid = await repo.createCommit(
@@ -128,7 +128,7 @@ function createSignature() {
   )
 }
 
-async function pushHeadToOriginBranch(repo, branch) {
+async function pushHeadToOrigin(repo, branch) {
   console.log(branch)
 
   const remote = await repo.getRemote("origin")

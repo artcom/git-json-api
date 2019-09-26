@@ -14,7 +14,7 @@ const nestedFile1 = {
 
 const nestedFile2 = ["one", "two", "three"]
 
-describe("Get Data", function () {
+describe("Get Data", () => {
   let repo
   let oldCommitHash
   let masterCommitHash
@@ -47,22 +47,22 @@ describe("Get Data", function () {
     await repo.init()
   })
 
-  describe("JSON object", function () {
+  describe("JSON object", () => {
     test("returns complete data for master", async () => {
       const { commitHash, data } = await repo.getData("master", "", false)
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
-        "rootFile": {
+        rootFile: {
           foo: "bar",
           number: { baz: "foo" }
         },
         dir: {
-          "nestedFile1": {
+          nestedFile1: {
             foo: "bar",
             number: 1
           },
-          "nestedFile2": ["one", "two", "three"]
+          nestedFile2: ["one", "two", "three"]
         }
       })
     })
@@ -92,11 +92,11 @@ describe("Get Data", function () {
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
-        "nestedFile1": {
+        nestedFile1: {
           foo: "bar",
           number: 1
         },
-        "nestedFile2": ["one", "two", "three"]
+        nestedFile2: ["one", "two", "three"]
       })
     })
 
@@ -105,12 +105,12 @@ describe("Get Data", function () {
 
       expect(commitHash).toBe(oldCommitHash)
       expect(data).toEqual({
-        "rootFile": {
+        rootFile: {
           foo: "bar",
           number: { baz: "foo" }
         },
         dir: {
-          "nestedFile1": {
+          nestedFile1: {
             foo: "bar",
             number: 1
           }
@@ -132,7 +132,7 @@ describe("Get Data", function () {
     })
   })
 
-  describe("List files", function () {
+  describe("List files", () => {
     test("returns files for master", async () => {
       const { commitHash, data } = await repo.getData("master", "", true)
 
@@ -178,11 +178,11 @@ describe("Get Data", function () {
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual({
-        "nestedFile1": {
+        nestedFile1: {
           foo: "bar",
           number: 1
         },
-        "nestedFile2": ["one", "two", "three"]
+        nestedFile2: ["one", "two", "three"]
       })
     })
 

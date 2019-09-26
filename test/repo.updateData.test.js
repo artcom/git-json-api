@@ -2,7 +2,7 @@ const Repo = require("../src/repo")
 
 const { createGitFunctions, createTempDir } = require("./helpers")
 
-describe("Update Data", function () {
+describe("Update Data", () => {
   let repo
   let masterCommitHash
   let branchCommitHash
@@ -50,7 +50,7 @@ describe("Update Data", function () {
 
   test("update nested file on master", async () => {
     const files = {
-      "nestedFile1": { foo: "baz" }
+      nestedFile1: { foo: "baz" }
     }
 
     const newCommitHash = await repo.updateData(masterCommitHash, "master", "dir", files)
@@ -65,8 +65,8 @@ describe("Update Data", function () {
 
   test("update files on branch", async () => {
     const files = {
-      "nestedFile1": { foo: "bar" },
-      "nestedFile2": { foo: "baz" }
+      nestedFile1: { foo: "bar" },
+      nestedFile2: { foo: "baz" }
     }
 
     const newCommitHash = await repo.updateData(branchCommitHash, "branch", "dir", files)
