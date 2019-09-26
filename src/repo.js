@@ -49,7 +49,7 @@ module.exports = class Repo {
       const parentCommit = await this.repo.getCommit(parentCommitHash)
       const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
       const branchCommit = await this.repo.getReferenceCommit(`refs/remotes/origin/${branch}`)
-      const commitHash = await createCommit(this.repo, parentCommit, branchCommit, newTreeOid, `Update directory /${path}`)
+      const commitHash = await createCommit(this.repo, parentCommit, branchCommit, newTreeOid, `Update '/${path}'`)
       await pushHeadToOriginBranch(this.repo, branch)
 
       this.lock.unlock()
@@ -65,7 +65,7 @@ module.exports = class Repo {
 async function getCommit(repo, version) {
   return repo.getReferenceCommit(`refs/remotes/origin/${version}`)
     .catch(() => repo.getCommit(version))
-    .catch(() => { throw new Error(`Could not find branch or commit '${version}'`) })
+    .catch(() => { throw new Error(`Branch or commit not found: '${version}'`) })
 }
 
 async function writeFiles(repo, parentCommit, path, files) {
@@ -140,7 +140,7 @@ async function pushHeadToOriginBranch(repo, branch) {
   const remoteCommit = await repo.getReferenceCommit(`refs/remotes/origin/${branch}`)
 
   if (headCommit.sha() !== remoteCommit.sha()) {
-    throw new Error("Could not push to remote")
+    throw new Error("Push to remote failed")
   }
 }
 function cb(...params) {
