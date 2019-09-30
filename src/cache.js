@@ -4,6 +4,9 @@ const mapKeys = require("lodash.mapkeys")
 const pickBy = require("lodash.pickby")
 const set = require("lodash.set")
 
+/*
+  Only caches data and files of the last requested commit.
+*/
 module.exports = class Cache {
   constructor() {
     this.commitHash = null
@@ -27,13 +30,13 @@ module.exports = class Cache {
     return new Promise((resolve, reject) => {
       const files = []
       tree.walk(true)
-        .on("end", () => resolve(files))
-        .on("error", error => reject(error))
         .on("entry", entry => {
-          if (entry.name().endsWith(".json")) {
+          if (entry.isFile() && entry.name().endsWith(".json")) {
             files.push(entry)
           }
         })
+        .on("end", () => resolve(files))
+        .on("error", error => reject(error))
         .start()
     })
   }
