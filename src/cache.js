@@ -6,7 +6,7 @@ const set = require("lodash.set")
 
 module.exports = class Cache {
   constructor() {
-    this.commitHash = "0000000000000000"
+    this.commitHash = null
     this.object = {}
     this.files = {}
   }
@@ -58,7 +58,13 @@ module.exports = class Cache {
 
   getObject(path) {
     if (path.length > 0) {
-      return get(this.object, path.split("/"))
+      const result = get(this.object, path.split("/"))
+
+      if (typeof result === "undefined") {
+        throw new Error("Not found")
+      }
+
+      return result
     } else {
       return this.object
     }

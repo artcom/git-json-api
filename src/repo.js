@@ -11,7 +11,7 @@ module.exports = class Repo {
     this.path = path
     this.repo = null
     this.lock = new Lock()
-    this.cache = new Cache("0000000000000000")
+    this.cache = new Cache()
   }
 
   async init() {
@@ -129,8 +129,6 @@ function createSignature() {
 }
 
 async function pushHeadToOrigin(repo, branch) {
-  console.log(branch)
-
   const remote = await repo.getRemote("origin")
   await remote.push(`HEAD:refs/heads/${branch}`, null, cb)
 
