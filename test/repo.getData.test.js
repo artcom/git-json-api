@@ -132,6 +132,15 @@ describe("Get Data", () => {
       expect(data).toEqual(["one", "two", "three", "four"])
     })
 
+    test("returns error with status 404 for non-existing directory", async () => {
+      expect.assertions(2)
+      return repo.getData("master", "doesnotexist", false)
+        .catch(e => {
+          expect(e.httpCode).toBe(404)
+          expect(e.message).toBe("Not found")
+        })
+    })
+
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", false)

@@ -20,7 +20,7 @@ module.exports = function routes(repo, log) {
       response.json(data)
     } catch (error) {
       log.error({ error: error.message })
-      response.status(500).json({ error: error.message })
+      response.status(error.httpCode || 500).json({ error: error.message })
     }
   }
 
