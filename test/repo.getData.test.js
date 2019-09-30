@@ -48,7 +48,7 @@ describe("Get Data", () => {
   })
 
   describe("JSON object", () => {
-    test("returns complete data for master", async () => {
+    test("returns data for master", async () => {
       const { commitHash, data } = await repo.getData("master", "", false)
 
       expect(commitHash).toBe(masterCommitHash)
@@ -100,7 +100,14 @@ describe("Get Data", () => {
       })
     })
 
-    test("returns complete JSON data for old commit hash", async () => {
+    test("returns data of a JSON node", async () => {
+      const { commitHash, data } = await repo.getData("master", "dir/nestedFile1/foo", false)
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual("bar")
+    })
+
+    test("returns data for commit hash", async () => {
       const { commitHash, data } = await repo.getData(oldCommitHash, "", false)
 
       expect(commitHash).toBe(oldCommitHash)
@@ -118,7 +125,7 @@ describe("Get Data", () => {
       })
     })
 
-    test("returns data for branch1", async () => {
+    test("returns data for branch", async () => {
       const { commitHash, data } = await repo.getData("branch1", "dir/nestedFile2", false)
 
       expect(commitHash).toBe(branch1CommitHash)
@@ -128,7 +135,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", false)
-        .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
+        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
     })
   })
 
@@ -150,7 +157,7 @@ describe("Get Data", () => {
       })
     })
 
-    test("returns files for old commit hash", async () => {
+    test("returns files for commit hash", async () => {
       const { commitHash, data } = await repo.getData(oldCommitHash, "", true)
 
       expect(commitHash).toBe(oldCommitHash)
@@ -173,6 +180,13 @@ describe("Get Data", () => {
       expect(data).toEqual({})
     })
 
+    test("returns no file for non-existing directory", async () => {
+      const { commitHash, data } = await repo.getData("master", "doesnotexist", true)
+
+      expect(commitHash).toBe(masterCommitHash)
+      expect(data).toEqual({})
+    })
+
     test("returns files for directory query", async () => {
       const { commitHash, data } = await repo.getData("master", "dir", true)
 
@@ -189,7 +203,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", true)
-        .catch(e => expect(e.message).toBe("Could not find branch or commit 'invalid'"))
+        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
     })
   })
 })
