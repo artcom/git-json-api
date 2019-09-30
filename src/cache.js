@@ -61,10 +61,13 @@ module.exports = class Cache {
 
   getObject(path) {
     if (path.length > 0) {
-      const result = get(this.object, path.split("/"))
+      const resolvedPath = path.endsWith("/") ? path.slice(0, -1) : path
+      const result = get(this.object, resolvedPath.split("/"))
 
       if (typeof result === "undefined") {
-        throw new Error("Not found")
+        const error = new Error("Not found")
+        error.httpCode = 404
+        throw error
       }
 
       return result
@@ -75,8 +78,9 @@ module.exports = class Cache {
 
   getFiles(path) {
     if (path.length > 0) {
-      const files = pickBy(this.files, (data, file) => file.startsWith(path) && file !== path)
-      return mapKeys(files, (data, file) => file.substr(path.length + 1))
+      const resolvedPath = path.endsWith("/") ? path : `${path}/`
+      const files = pickBy(this.files, (data, file) => file.startsWith(resolvedPath))
+      return mapKeys(files, (data, file) => file.substr(resolvedPath.length))
     } else {
       return this.files
     }
