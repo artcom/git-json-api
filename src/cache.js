@@ -44,10 +44,14 @@ module.exports = class Cache {
   async buildData(fileEntries) {
     const object = {}
     const files = {}
+
+    // fileEntries are ordered breadth-first.
+    // therefore subsequent entries with the same path override previous entries
     for (const entry of fileEntries) {
       const blob = await entry.getBlob()
       const fileData = JSON5.parse(blob.content())
-      const path = entry.path().slice(0, -5)
+      const path = removeJSONFileExtension(entry.path())
+
       files[path] = fileData
       set(object, path.split("/"), fileData)
     }
@@ -85,4 +89,8 @@ module.exports = class Cache {
       return this.files
     }
   }
+}
+
+function removeJSONFileExtension(path) {
+  return path.slice(0, -5)
 }
