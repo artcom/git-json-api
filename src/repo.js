@@ -140,7 +140,7 @@ function createSignature() {
 
 async function pushHeadToOrigin(repo, branch) {
   const remote = await repo.getRemote("origin")
-  await remote.push(`HEAD:refs/heads/${branch}`, null, cb)
+  await remote.push(`HEAD:refs/heads/${branch}`, null)
 
   // remote.push() does not reject nor return an error code which is a bug
   // therefore we check the new commits manually
@@ -150,7 +150,4 @@ async function pushHeadToOrigin(repo, branch) {
   if (headCommit.sha() !== remoteCommit.sha()) {
     throw new Error("Push to remote failed")
   }
-}
-function cb(...params) {
-  console.log(params)
 }
