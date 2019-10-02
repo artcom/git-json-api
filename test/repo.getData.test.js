@@ -144,7 +144,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", false)
-        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
+        .catch(e => expect(e.message).toBe("Reference or commit not found: 'invalid'"))
     })
   })
 
@@ -212,7 +212,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", true)
-        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
+        .catch(e => expect(e.message).toBe("Reference or commit not found: 'invalid'"))
     })
   })
 })
