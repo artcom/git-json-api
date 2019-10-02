@@ -25,7 +25,7 @@ module.exports = function routes(repo, log) {
   }
 
   async function handlePost({ body, ip }, response) {
-    const { parentCommit, branch, path, files } = body
+    const { parentCommit, branch = "master", path, files } = body
 
     log.info({ ip, parentCommit, branch, path, files }, "Update request received")
 
