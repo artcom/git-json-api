@@ -19,6 +19,7 @@ describe("Get Data", () => {
   let oldCommitHash
   let masterCommitHash
   let branch1CommitHash
+  let branch2CommitHash
 
   beforeEach(async () => {
     const originRepoDir = createTempDir() // bare origin repo
@@ -42,6 +43,14 @@ describe("Get Data", () => {
     git("checkout", "branch1")
     branch1CommitHash = commit("dir/nestedFile2.json", [...nestedFile2, "four"])
     git("push", "origin", "branch1")
+
+    git("checkout", "master")
+    git("branch", "branch2")
+    git("checkout", "branch2")
+    branch2CommitHash = commit("dir.json", {
+      nestedFile1: "shouldBeOverwrittenByFilesInSubdirectory"
+    })
+    git("push", "origin", "branch2")
 
     repo = new Repo(originRepoDir, cloneRepoDir)
     await repo.init()
@@ -130,6 +139,19 @@ describe("Get Data", () => {
 
       expect(commitHash).toBe(branch1CommitHash)
       expect(data).toEqual(["one", "two", "three", "four"])
+    })
+
+    test("overwrites file content with same-name subdirectory content", async () => {
+      const { commitHash, data } = await repo.getData("branch2", "dir", false)
+
+      expect(commitHash).toBe(branch2CommitHash)
+      expect(data).toEqual({
+        nestedFile1: {
+          foo: "bar",
+          number: 1
+        },
+        nestedFile2: ["one", "two", "three"]
+      })
     })
 
     test("returns error with status 404 for non-existing directory", async () => {
