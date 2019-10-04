@@ -15,7 +15,7 @@ module.exports.createGitFunctions = workingRepoDir => {
     fse.outputJsonSync(`${workingRepoDir}/${filePath}`, content, { spaces: 2 })
     git("add", filePath)
     git("commit", "--message", `Add ${filePath}`)
-    return git("show-ref", "--hash").split("\n")[0]
+    return git("log", "-n 1", "--pretty=format:%H")
   }
 
   return { git, commit }
