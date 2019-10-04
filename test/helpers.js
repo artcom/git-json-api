@@ -4,6 +4,8 @@ const tmp = require("tmp")
 
 module.exports.createTempDir = () => tmp.dirSync().name
 
+module.exports.copyAll = (fromDir, toDir) => fse.copy(fromDir, toDir)
+
 module.exports.createGitFunctions = workingRepoDir => {
   function git(...args) {
     return execFileSync("git", args, { cwd: workingRepoDir, stdio: "pipe" })

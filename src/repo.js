@@ -27,7 +27,7 @@ module.exports = class Repo {
       await this.lock.lock()
 
       await this.repo.fetch("origin")
-      const commit = await getCommitByHashOrReference(this.repo, version)
+      const commit = await getCommitByVersion(this.repo, version)
       await this.cache.update(commit)
 
       this.lock.unlock()
@@ -42,11 +42,11 @@ module.exports = class Repo {
     }
   }
 
-  async updateData(parentCommitHash, branch, path, files) {
+  async replacePath(parentVersion, branch, path, files) {
     try {
       await this.lock.lock()
 
-      const parentCommit = await getCommitByHash(this.repo, parentCommitHash)
+      const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitByReference(this.repo, branch)
       const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
       const commitHash = await commitAndMerge(this.repo, parentCommit, branchCommit, newTreeOid, `Update '/${path}'`)
@@ -62,20 +62,15 @@ module.exports = class Repo {
   }
 }
 
-async function getCommitByHash(repo, hash) {
-  return repo.getCommit(hash)
-    .catch(() => { throw new Error(`Commit not found: '${hash}'`) })
-}
-
 async function getCommitByReference(repo, reference) {
   return repo.getReferenceCommit(`refs/remotes/origin/${reference}`)
-    .catch(() => { throw new Error(`Reference not found: '${reference}'`) })
+    .catch(() => { throw new Error(`Branch not found: '${reference}'`) })
 }
 
-async function getCommitByHashOrReference(repo, version) {
+async function getCommitByVersion(repo, version) {
   return repo.getReferenceCommit(`refs/remotes/origin/${version}`)
     .catch(() => repo.getCommit(version))
-    .catch(() => { throw new Error(`Reference or commit not found: '${version}'`) })
+    .catch(() => { throw new Error(`Branch or commit not found: '${version}'`) })
 }
 
 async function writeFiles(repo, parentCommit, path, files) {

@@ -2,11 +2,11 @@ const express = require("express")
 
 module.exports = function routes(repo, log) {
   return new express.Router()
-    .get("/:version", handleGet)
-    .get("/:version/*", handleGet)
-    .post("/", handlePost)
+    .get("/:version", handleGetData)
+    .get("/:version/*", handleGetData)
+    .post("/replacePath", handleReplacePath)
 
-  async function handleGet({ ip, params, query }, response) {
+  async function handleGetData({ ip, params, query }, response) {
     const listFiles = query.listFiles === "true"
     const path = params[0] || ""
     const version = params.version
@@ -24,13 +24,13 @@ module.exports = function routes(repo, log) {
     }
   }
 
-  async function handlePost({ body, ip }, response) {
-    const { parentCommit, branch = "master", path, files } = body
+  async function handleReplacePath({ body, ip }, response) {
+    const { parent = "master", branch = "master", path, files } = body
 
-    log.info({ ip, parentCommit, branch, path, files }, "Update request received")
+    log.info({ ip, parent, branch, path, files }, "Update request received")
 
     try {
-      const commitHash = await repo.updateData(parentCommit, branch, path, files)
+      const commitHash = await repo.replacePath(parent, branch, path, files)
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.end()

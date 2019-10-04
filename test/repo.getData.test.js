@@ -1,6 +1,6 @@
 const Repo = require("../src/repo")
 
-const { createGitFunctions, createTempDir } = require("./helpers")
+const { copyAll, createGitFunctions, createTempDir } = require("./helpers")
 
 const rootFile = {
   foo: "bar",
@@ -16,15 +16,15 @@ const nestedFile2 = ["one", "two", "three"]
 
 describe("Get Data", () => {
   let repo
+  let originRepoDir
   let oldCommitHash
   let masterCommitHash
   let branch1CommitHash
   let branch2CommitHash
 
-  beforeEach(async () => {
-    const originRepoDir = createTempDir() // bare origin repo
+  beforeAll(async () => {
+    originRepoDir = createTempDir() // bare origin repo
     const workingRepoDir = createTempDir() // used to push test data into the bare origin repo
-    const cloneRepoDir = createTempDir() // local clone of originRepo used by the API
 
     // create helper functions
     const { git, commit } = createGitFunctions(workingRepoDir)
@@ -51,8 +51,13 @@ describe("Get Data", () => {
       nestedFile1: "shouldBeOverwrittenByFilesInSubdirectory"
     })
     git("push", "origin", "branch2")
+  })
 
-    repo = new Repo(originRepoDir, cloneRepoDir)
+  beforeEach(async () => {
+    const originRepoDirForTest = createTempDir()
+    await copyAll(originRepoDir, originRepoDirForTest)
+
+    repo = new Repo(originRepoDirForTest, createTempDir())
     await repo.init()
   })
 
@@ -166,7 +171,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", false)
-        .catch(e => expect(e.message).toBe("Reference or commit not found: 'invalid'"))
+        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
     })
   })
 
@@ -234,7 +239,7 @@ describe("Get Data", () => {
     test("returns error for invalid branch", () => {
       expect.assertions(1)
       return repo.getData("invalid", "", true)
-        .catch(e => expect(e.message).toBe("Reference or commit not found: 'invalid'"))
+        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
     })
   })
 })
