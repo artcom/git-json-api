@@ -21,6 +21,7 @@ repo.init()
 
 app.use(bodyParser.json({ limit: process.env.BODY_SIZE_LIMIT || "100kb" }))
 app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
+app.set("trust proxy", true)
 app.use("/", routes(repo, log))
 
 app.listen(port, () => {
