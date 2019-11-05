@@ -90,12 +90,11 @@ async function writeFiles(repo, parentCommit, path, files) {
 }
 
 async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message) {
-  const signature = createSignature()
-
+  const commitSignature = createSignature()
   const commitOid = await repo.createCommit(
     "HEAD",
-    signature,
-    signature,
+    commitSignature,
+    commitSignature,
     message,
     treeOid,
     [parentCommit]
@@ -111,11 +110,12 @@ async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message
       throw new Error("Merge conflict")
     }
 
+    const mergeSignature = createSignature()
     const mergeTreeOid = await index.writeTreeTo(repo)
     const mergeCommitOid = await repo.createCommit(
       "HEAD",
-      signature,
-      signature,
+      mergeSignature,
+      mergeSignature,
       "Merge",
       mergeTreeOid,
       [commit, branchCommit]
