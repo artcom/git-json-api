@@ -42,15 +42,21 @@ module.exports = class Repo {
     }
   }
 
-  async replacePath(parentVersion, branch, path, files) {
+  async replacePath(parentVersion, updateBranch, path, files) {
     try {
       await this.lock.lock()
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
-      const branchCommit = await getCommitByReference(this.repo, branch)
+      const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
       const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
-      const commitHash = await commitAndMerge(this.repo, parentCommit, branchCommit, newTreeOid, `Update '/${path}'`)
-      await pushHeadToOrigin(this.repo, branch)
+      const commitHash = await commitAndMerge(
+        this.repo,
+        parentCommit,
+        branchCommit,
+        newTreeOid,
+        `Update '/${path}'`
+      )
+      await pushHeadToOrigin(this.repo, updateBranch)
 
       this.lock.unlock()
 
@@ -62,9 +68,9 @@ module.exports = class Repo {
   }
 }
 
-async function getCommitByReference(repo, reference) {
+async function getCommitForUpdateBranch(repo, reference) {
   return repo.getReferenceCommit(`refs/remotes/origin/${reference}`)
-    .catch(() => { throw new Error(`Branch not found: '${reference}'`) })
+    .catch(() => { throw new Error("Invalid or missing update branch") })
 }
 
 async function getCommitByVersion(repo, version) {
