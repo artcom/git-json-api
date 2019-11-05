@@ -1,6 +1,6 @@
 const Repo = require("../src/repo")
 
-const { copyAll, createGitFunctions, createTempDir } = require("./helpers")
+const { createGitFunctions, createTempDir } = require("./helpers")
 
 const rootFile = {
   foo: "bar",
@@ -24,18 +24,16 @@ describe("Get Data", () => {
 
   beforeAll(async () => {
     originRepoDir = createTempDir() // bare origin repo
-    const workingRepoDir = createTempDir() // used to push test data into the bare origin repo
+    const helperRepoDir = createTempDir() // used to push test data into the bare origin repo
 
     // create helper functions
-    const { git, commit } = createGitFunctions(workingRepoDir)
+    const { git, commit } = createGitFunctions(helperRepoDir)
 
     git("init", "--bare", originRepoDir)
-    git("clone", originRepoDir, workingRepoDir)
+    git("clone", originRepoDir, helperRepoDir)
 
     commit("rootFile.json", rootFile)
     oldCommitHash = commit("dir/nestedFile1.json", nestedFile1)
-    git("push", "origin", "master")
-
     masterCommitHash = commit("dir/nestedFile2.json", nestedFile2)
     git("push", "origin", "master")
 
@@ -45,6 +43,7 @@ describe("Get Data", () => {
     git("push", "origin", "branch1")
 
     git("checkout", "master")
+
     git("branch", "branch2")
     git("checkout", "branch2")
     branch2CommitHash = commit("dir.json", {
@@ -54,10 +53,7 @@ describe("Get Data", () => {
   })
 
   beforeEach(async () => {
-    const originRepoDirForTest = createTempDir()
-    await copyAll(originRepoDir, originRepoDirForTest)
-
-    repo = new Repo(originRepoDirForTest, createTempDir())
+    repo = new Repo(originRepoDir, createTempDir())
     await repo.init()
   })
 
@@ -159,7 +155,7 @@ describe("Get Data", () => {
       })
     })
 
-    test("returns error with status 404 for non-existing directory", async () => {
+    test("returns error with status 404 for non-existing entry", async () => {
       expect.assertions(2)
       return repo.getData("master", "doesnotexist", false)
         .catch(e => {
@@ -234,12 +230,6 @@ describe("Get Data", () => {
         },
         nestedFile2: ["one", "two", "three"]
       })
-    })
-
-    test("returns error for invalid branch", () => {
-      expect.assertions(1)
-      return repo.getData("invalid", "", true)
-        .catch(e => expect(e.message).toBe("Branch or commit not found: 'invalid'"))
     })
   })
 })

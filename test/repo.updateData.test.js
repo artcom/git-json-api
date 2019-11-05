@@ -11,13 +11,13 @@ describe("Update Data", () => {
 
   beforeAll(async () => {
     originRepoDir = createTempDir() // bare origin repo
-    const workingRepoDir = createTempDir() // used to push test data into the bare origin repo
+    const helperRepoDir = createTempDir() // used to push test data into the bare origin repo
 
     // create helper functions
-    const { git, commit } = createGitFunctions(workingRepoDir)
+    const { git, commit } = createGitFunctions(helperRepoDir)
 
     git("init", "--bare", originRepoDir)
-    git("clone", originRepoDir, workingRepoDir)
+    git("clone", originRepoDir, helperRepoDir)
 
     commit("rootFile.json", { foo: "bar", })
     masterCommitHash = commit("dir/nestedFile1.json", { foo: "bar" })
@@ -30,10 +30,10 @@ describe("Update Data", () => {
   })
 
   beforeEach(async () => {
-    const originRepoDirForTest = createTempDir()
-    await copyAll(originRepoDir, originRepoDirForTest)
+    const originRepoDirCopy = createTempDir()
+    await copyAll(originRepoDir, originRepoDirCopy)
 
-    repo = new Repo(originRepoDirForTest, createTempDir())
+    repo = new Repo(originRepoDirCopy, createTempDir())
     await repo.init()
   })
 
@@ -86,22 +86,22 @@ describe("Update Data", () => {
 
   test("merge parallel changes in different files", async () => {
     const files1 = {
-      "rootFile": { foo: "baz" },
+      "rootFile": { foo: "changed" },
       "dir/nestedFile1": { foo: "bar" }
     }
     await repo.replacePath(masterCommitHash, "master", "", files1)
 
     const files2 = {
       "rootFile": { foo: "bar" },
-      "dir/nestedFile1": { foo: "baz" }
+      "dir/nestedFile1": { foo: "changed" }
     }
     const mergeCommitHash = await repo.replacePath(masterCommitHash, "master", "", files2)
 
     const { data } = await repo.getData(mergeCommitHash, "", true)
 
     expect(data).toEqual({
-      "rootFile": { foo: "baz" },
-      "dir/nestedFile1": { foo: "baz" }
+      "rootFile": { foo: "changed" },
+      "dir/nestedFile1": { foo: "changed" }
     })
   })
 })
