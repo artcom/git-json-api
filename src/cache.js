@@ -64,20 +64,20 @@ module.exports = class Cache {
   }
 
   getObject(path) {
-    if (path.length > 0) {
-      const resolvedPath = path.endsWith("/") ? path.slice(0, -1) : path
-      const result = get(this.object, resolvedPath.split("/"))
-
-      if (typeof result === "undefined") {
-        const error = new Error("Not found")
-        error.httpCode = 404
-        throw error
-      }
-
-      return result
-    } else {
+    if (path === "" || path === "/") {
       return this.object
     }
+
+    const resolvedPath = path.endsWith("/") ? path.slice(0, -1) : path
+    const result = get(this.object, resolvedPath.split("/"))
+
+    if (typeof result === "undefined") {
+      const error = new Error("Not found")
+      error.httpCode = 404
+      throw error
+    }
+
+    return result
   }
 
   getFiles(path) {
