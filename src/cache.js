@@ -51,7 +51,7 @@ module.exports = class Cache {
     for (const entry of fileEntries) {
       const blob = await entry.getBlob()
       const fileData = JSON5.parse(blob.content())
-      const filepath = resolvePath(entry.path())
+      const filepath = removeFileExtension(entry.path())
 
       files[filepath] = fileData
       set(object, filepath.split(Path.sep), fileData)
@@ -90,8 +90,7 @@ module.exports = class Cache {
   }
 }
 
-// removes a file extension and a trailing separator
-function resolvePath(path) {
+function removeFileExtension(path) {
   const { dir, name } = Path.parse(path)
   return Path.join(dir, name)
 }
