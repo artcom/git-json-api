@@ -1,6 +1,7 @@
 const JSON5 = require("json5")
 const get = require("lodash.get")
 const mapKeys = require("lodash.mapkeys")
+const Path = require("path")
 const pickBy = require("lodash.pickby")
 const set = require("lodash.set")
 
@@ -50,10 +51,10 @@ module.exports = class Cache {
     for (const entry of fileEntries) {
       const blob = await entry.getBlob()
       const fileData = JSON5.parse(blob.content())
-      const path = removeJSONFileExtension(entry.path())
+      const filepath = resolvePath(entry.path())
 
-      files[path] = fileData
-      set(object, path.split("/"), fileData)
+      files[filepath] = fileData
+      set(object, filepath.split(Path.sep), fileData)
     }
 
     return { object, files }
@@ -64,33 +65,33 @@ module.exports = class Cache {
   }
 
   getObject(path) {
-    if (path === "" || path === "/") {
+    if (path === "") {
       return this.object
+    } else {
+      const result = get(this.object, path.split(Path.sep))
+
+      if (typeof result === "undefined") {
+        const error = new Error("Not found")
+        error.httpCode = 404
+        throw error
+      }
+
+      return result
     }
-
-    const resolvedPath = path.endsWith("/") ? path.slice(0, -1) : path
-    const result = get(this.object, resolvedPath.split("/"))
-
-    if (typeof result === "undefined") {
-      const error = new Error("Not found")
-      error.httpCode = 404
-      throw error
-    }
-
-    return result
   }
 
   getFiles(path) {
-    if (path.length > 0) {
-      const resolvedPath = path.endsWith("/") ? path : `${path}/`
-      const files = pickBy(this.files, (data, file) => file.startsWith(resolvedPath))
-      return mapKeys(files, (data, file) => file.substr(resolvedPath.length))
-    } else {
+    if (path === "") {
       return this.files
+    } else {
+      const files = pickBy(this.files, (data, file) => file.startsWith(`${path}${Path.sep}`))
+      return mapKeys(files, (data, file) => file.substr(path.length + 1))
     }
   }
 }
 
-function removeJSONFileExtension(path) {
-  return path.slice(0, -5)
+// removes a file extension and a trailing separator
+function resolvePath(path) {
+  const { dir, name } = Path.parse(path)
+  return Path.join(dir, name)
 }
