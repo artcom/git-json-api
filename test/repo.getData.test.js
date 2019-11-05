@@ -205,18 +205,22 @@ describe("Get Data", () => {
       })
     })
 
-    test("returns no file for file query", async () => {
-      const { commitHash, data } = await repo.getData("master", "rootFile", true)
-
-      expect(commitHash).toBe(masterCommitHash)
-      expect(data).toEqual({})
+    test("returns error with status 404 for file query", async () => {
+      expect.assertions(2)
+      return repo.getData("master", "rootFile", true)
+        .catch(e => {
+          expect(e.httpCode).toBe(404)
+          expect(e.message).toBe("Not found")
+        })
     })
 
-    test("returns no file for non-existing directory", async () => {
-      const { commitHash, data } = await repo.getData("master", "doesnotexist", true)
-
-      expect(commitHash).toBe(masterCommitHash)
-      expect(data).toEqual({})
+    test("returns error with status 404 for non-existing directory", async () => {
+      expect.assertions(2)
+      return repo.getData("master", "doesnotexist", true)
+        .catch(e => {
+          expect(e.httpCode).toBe(404)
+          expect(e.message).toBe("Not found")
+        })
     })
 
     test("returns files for directory query", async () => {

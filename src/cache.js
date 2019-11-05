@@ -85,7 +85,14 @@ module.exports = class Cache {
       return this.files
     } else {
       const files = pickBy(this.files, (data, file) => file.startsWith(`${path}${Path.sep}`))
-      return mapKeys(files, (data, file) => file.substr(path.length + 1))
+
+      if (Object.keys(files).length === 0) {
+        const error = new Error("Not found")
+        error.httpCode = 404
+        throw error
+      } else {
+        return mapKeys(files, (data, file) => file.substr(path.length + 1))
+      }
     }
   }
 }
