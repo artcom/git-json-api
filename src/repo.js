@@ -102,7 +102,7 @@ async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message
 
   const commit = await repo.getCommit(commitOid)
 
-  if (branchCommit.sha() === parentCommit.sha()) {
+  if (await isAncestor(repo, branchCommit, commit)) {
     return commit.sha()
   } else {
     const index = await Git.Merge.commits(repo, branchCommit, commit)
@@ -144,5 +144,26 @@ async function pushHeadToOrigin(repo, branch) {
 
   if (headCommit.sha() !== remoteCommit.sha()) {
     throw new Error("Push to remote failed")
+  }
+}
+
+async function isAncestor(repo, ancestorCommit, commit) {
+  const revWalk = repo.createRevWalk()
+  revWalk.sorting(Git.Revwalk.SORT.TOPOLOGICAL, Git.Revwalk.SORT.REVERSE)
+  revWalk.push(commit.id())
+
+  try {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (ancestorCommit.id().equal(await revWalk.next())) {
+        return true
+      }
+    }
+  } catch (error) {
+    if (error.errno === Git.Error.CODE.ITEROVER) {
+      return false
+    } else {
+      throw error
+    }
   }
 }
