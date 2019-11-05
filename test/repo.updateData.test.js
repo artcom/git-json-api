@@ -104,4 +104,24 @@ describe("Update Data", () => {
       "dir/nestedFile1": { foo: "changed" }
     })
   })
+
+  test("return merge conflict error", async () => {
+    expect.assertions(1)
+
+    const files1 = {
+      "rootFile": { foo: "change1" },
+      "dir/nestedFile1": { foo: "bar" }
+    }
+    await repo.replacePath(masterCommitHash, "master", "", files1)
+
+    const files2 = {
+      "rootFile": { foo: "change2" },
+      "dir/nestedFile1": { foo: "bar" }
+    }
+
+    return repo.replacePath(masterCommitHash, "master", "", files2)
+      .catch(e => {
+        expect(e.message).toBe("Merge conflict")
+      })
+  })
 })
