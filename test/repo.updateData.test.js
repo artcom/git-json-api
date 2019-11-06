@@ -124,4 +124,31 @@ describe("Update Data", () => {
         expect(e.message).toBe("Merge conflict")
       })
   })
+
+  test("update files on master parent with undefined update branch", async () => {
+    const files = {
+      nestedFile1: { foo: "bar" },
+      nestedFile2: { foo: "baz" }
+    }
+
+    const newCommitHash = await repo.replacePath("master", undefined, "dir", files)
+    const commitHashResult = await repo.getData(newCommitHash, "dir", true)
+
+    expect(commitHashResult.data).toEqual(files)
+    expect(commitHashResult.commitHash).toEqual(newCommitHash)
+  })
+
+  test("return error for commit hash parent with undefined update branch", async () => {
+    expect.assertions(1)
+
+    const files = {
+      "rootFile": { foo: "change1" },
+      "dir/nestedFile1": { foo: "bar" }
+    }
+
+    return repo.replacePath(masterCommitHash, undefined, "", files)
+      .catch(e => {
+        expect(e.message).toBe("Invalid or missing update branch")
+      })
+  })
 })
