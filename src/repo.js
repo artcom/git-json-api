@@ -5,6 +5,8 @@ const rimraf = require("rimraf")
 const Cache = require("./cache")
 const Lock = require("./lock")
 
+const CONFLICT_REGEXP = /(?:[^\r\n]*\n)?<<<<<<< ours[\s\S]*?>>>>>>> theirs(?:\n[^\r\n]*)?/g
+
 module.exports = class Repo {
   constructor(uri, path) {
     this.uri = uri
@@ -114,22 +116,23 @@ async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message
   } else {
     const index = await Git.Merge.commits(repo, branchCommit, commit)
     if (index.hasConflicts()) {
-      throw new Error("Merge conflict")
+      const conflictReport = await createConflictReport(repo, index)
+      throw new Error(`Merge conflict\n\n${conflictReport}`)
+    } else {
+      const mergeSignature = createSignature()
+      const mergeTreeOid = await index.writeTreeTo(repo)
+      const mergeCommitOid = await repo.createCommit(
+        "HEAD",
+        mergeSignature,
+        mergeSignature,
+        "Merge",
+        mergeTreeOid,
+        [commit, branchCommit]
+      )
+
+      const mergeCommit = await repo.getCommit(mergeCommitOid)
+      return mergeCommit.sha()
     }
-
-    const mergeSignature = createSignature()
-    const mergeTreeOid = await index.writeTreeTo(repo)
-    const mergeCommitOid = await repo.createCommit(
-      "HEAD",
-      mergeSignature,
-      mergeSignature,
-      "Merge",
-      mergeTreeOid,
-      [commit, branchCommit]
-    )
-
-    const mergeCommit = await repo.getCommit(mergeCommitOid)
-    return mergeCommit.sha()
   }
 }
 
@@ -173,4 +176,18 @@ async function isAncestor(repo, ancestorCommit, commit) {
       throw error
     }
   }
+}
+
+async function createConflictReport(repo, index) {
+  await Git.Checkout.index(repo, index)
+
+  return index.entries()
+    .filter(entry => Git.Index.entryIsConflict(entry))
+    .map(entry => entry.path)
+    .filter((path, indexOfPath, self) => self.indexOf(path) === indexOfPath) // unique
+    .map(path => {
+      const content = fse.readFileSync(`${repo.workdir()}${path}`, "utf-8")
+      const conflicts = [...content.matchAll(CONFLICT_REGEXP)].map(([conflict]) => conflict)
+      return `${path}\n\n${conflicts.join("\n\n")}`
+    }).join("\n\n")
 }

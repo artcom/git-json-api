@@ -121,7 +121,18 @@ describe("Update Data", () => {
 
     return repo.replacePath(masterCommitHash, "master", "", files2)
       .catch(e => {
-        expect(e.message).toBe("Merge conflict")
+        expect(e.message).toBe(
+          `Merge conflict
+
+rootFile.json
+
+{
+<<<<<<< ours
+  "foo": "change1"
+=======
+  "foo": "change2"
+>>>>>>> theirs
+}`)
       })
   })
 
