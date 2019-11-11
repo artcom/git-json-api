@@ -163,24 +163,8 @@ async function pushHeadToOrigin(repo, branch) {
 }
 
 async function isAncestor(repo, ancestorCommit, commit) {
-  const revWalk = repo.createRevWalk()
-  revWalk.sorting(Git.Revwalk.SORT.TOPOLOGICAL, Git.Revwalk.SORT.REVERSE)
-  revWalk.push(commit.id())
-
-  try {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      if (ancestorCommit.id().equal(await revWalk.next())) {
-        return true
-      }
-    }
-  } catch (error) {
-    if (error.errno === Git.Error.CODE.ITEROVER) {
-      return false
-    } else {
-      throw error
-    }
-  }
+  const baseCommitOid = await Git.Merge.base(repo, commit.id(), ancestorCommit.id())
+  return ancestorCommit.id().equal(baseCommitOid)
 }
 
 async function createConflictReport(repo, index) {
