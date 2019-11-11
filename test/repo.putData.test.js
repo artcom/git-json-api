@@ -43,7 +43,7 @@ describe("Update Data", () => {
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    const newCommitHash = await repo.replacePath("master", "master", "", files)
+    const newCommitHash = await repo.putData("master", "master", "", { files })
     const commitHashResult = await repo.getData(newCommitHash, "", true)
     const masterResult = await repo.getData("master", "", true)
 
@@ -53,12 +53,25 @@ describe("Update Data", () => {
     expect(masterResult.commitHash).toEqual(newCommitHash)
   })
 
+  test("update root file content on master", async () => {
+    const content = { foo: "baz" }
+
+    const newCommitHash = await repo.putData("master", "master", "rootFile", { content })
+    const commitHashResult = await repo.getData(newCommitHash, "rootFile", false)
+    const masterResult = await repo.getData("master", "rootFile", false)
+
+    expect(commitHashResult.data).toEqual(content)
+    expect(commitHashResult.commitHash).toEqual(newCommitHash)
+    expect(masterResult.data).toEqual(content)
+    expect(masterResult.commitHash).toEqual(newCommitHash)
+  })
+
   test("update nested file on master", async () => {
     const files = {
       nestedFile1: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.replacePath("master", "master", "dir", files)
+    const newCommitHash = await repo.putData("master", "master", "dir", { files })
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
     const masterResult = await repo.getData("master", "dir", true)
 
@@ -74,14 +87,14 @@ describe("Update Data", () => {
       nestedFile2: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.replacePath(branchCommitHash, "branch", "dir", files)
+    const newCommitHash = await repo.putData(branchCommitHash, "branch", "dir", { files })
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
-    const branchResult = await repo.getData("branch", "dir", true)
+    const masterResult = await repo.getData("branch", "dir", true)
 
     expect(commitHashResult.data).toEqual(files)
     expect(commitHashResult.commitHash).toEqual(newCommitHash)
-    expect(branchResult.data).toEqual(files)
-    expect(branchResult.commitHash).toEqual(newCommitHash)
+    expect(masterResult.data).toEqual(files)
+    expect(masterResult.commitHash).toEqual(newCommitHash)
   })
 
   test("merge parallel changes in different files", async () => {
@@ -89,13 +102,14 @@ describe("Update Data", () => {
       "rootFile": { foo: "changed" },
       "dir/nestedFile1": { foo: "bar" }
     }
-    await repo.replacePath(masterCommitHash, "master", "", files1)
+    await repo.putData(masterCommitHash, "master", "", { files: files1 })
 
     const files2 = {
       "rootFile": { foo: "bar" },
       "dir/nestedFile1": { foo: "changed" }
     }
-    const mergeCommitHash = await repo.replacePath(masterCommitHash, "master", "", files2)
+    const mergeCommitHash =
+      await repo.putData(masterCommitHash, "master", "", { files: files2 })
 
     const { data } = await repo.getData(mergeCommitHash, "", true)
 
@@ -112,14 +126,14 @@ describe("Update Data", () => {
       "rootFile": { foo: "change1" },
       "dir/nestedFile1": { foo: "bar" }
     }
-    await repo.replacePath(masterCommitHash, "master", "", files1)
+    await repo.putData(masterCommitHash, "master", "", { files: files1 })
 
     const files2 = {
       "rootFile": { foo: "change2" },
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    return repo.replacePath(masterCommitHash, "master", "", files2)
+    return repo.putData(masterCommitHash, "master", "", { files: files2 })
       .catch(e => {
         expect(e.message).toBe(
           `Merge conflict
@@ -142,7 +156,7 @@ rootFile.json
       nestedFile2: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.replacePath("master", undefined, "dir", files)
+    const newCommitHash = await repo.putData("master", undefined, "dir", { files })
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
 
     expect(commitHashResult.data).toEqual(files)
@@ -157,9 +171,18 @@ rootFile.json
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    return repo.replacePath(masterCommitHash, undefined, "", files)
+    return repo.putData(masterCommitHash, undefined, "", { files })
       .catch(e => {
         expect(e.message).toBe("Invalid or missing update branch")
+      })
+  })
+
+  test("return error if 'files' or 'content' is missing", async () => {
+    expect.assertions(1)
+
+    return repo.putData("master", "master", "", {})
+      .catch(e => {
+        expect(e.message).toBe("Missing 'files' or 'content'")
       })
   })
 })

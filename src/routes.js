@@ -28,12 +28,12 @@ module.exports = function routes(repo, log) {
   async function putData({ body, ip, params }, response) {
     const path = params[0] || ""
     const parent = params.parent
-    const { updateBranch, files } = body
+    const { updateBranch, files, content } = body
 
-    log.info({ ip, parent, updateBranch, path, files }, "Update request received")
+    log.info({ ip, parent, updateBranch, path, files, content }, "Update request received")
 
     try {
-      const commitHash = await repo.replacePath(parent, updateBranch, path, files)
+      const commitHash = await repo.putData(parent, updateBranch, path, { files, content })
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.end()

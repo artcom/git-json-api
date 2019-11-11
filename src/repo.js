@@ -44,13 +44,13 @@ module.exports = class Repo {
     }
   }
 
-  async replacePath(parentVersion, updateBranch, path, files) {
+  async putData(parentVersion, updateBranch, path, { files, content }) {
     try {
       await this.lock.lock()
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
-      const newTreeOid = await writeFiles(this.repo, parentCommit, path, files)
+      const newTreeOid = await put(this.repo, parentCommit, path, { files, content })
       const commitHash = await commitAndMerge(
         this.repo,
         parentCommit,
@@ -81,7 +81,7 @@ async function getCommitByVersion(repo, version) {
     .catch(() => { throw new Error(`Branch or commit not found: '${version}'`) })
 }
 
-async function writeFiles(repo, parentCommit, path, files) {
+async function put(repo, parentCommit, path, { files, content }) {
   repo.setHeadDetached(parentCommit)
   await Git.Checkout.tree(repo, parentCommit, {
     checkoutStrategy:
@@ -90,17 +90,29 @@ async function writeFiles(repo, parentCommit, path, files) {
       Git.Checkout.STRATEGY.REMOVE_IGNORED
   })
 
-  const fqPath = `${repo.workdir()}${path}`
-  rimraf.sync(`${fqPath}/*`)
+  if (files) {
+    // clear directory first
+    rimraf.sync(`${repo.workdir()}${path}/*`)
 
-  for (const file of Object.keys(files)) {
-    fse.outputJsonSync(`${fqPath}/${file}.json`, files[file], { spaces: 2 })
+    for (const file of Object.keys(files)) {
+      outputJsonFile(repo.workdir(), `${path}/${file}`, files[file])
+    }
+  } else {
+    if (content) {
+      outputJsonFile(repo.workdir(), path, content)
+    } else {
+      throw new Error("Missing 'files' or 'content'")
+    }
   }
 
   const index = await repo.refreshIndex()
   await index.addAll()
   await index.write()
   return await index.writeTree()
+}
+
+function outputJsonFile(workDir, filepath, content) {
+  fse.outputJsonSync(`${workDir}${filepath}.json`, content, { spaces: 2 })
 }
 
 async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message) {
