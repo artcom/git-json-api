@@ -80,7 +80,8 @@ async function getCommitByVersion(repo, version) {
 }
 
 async function writeFiles(repo, parentCommit, path, files) {
-  await Git.Reset.reset(repo, parentCommit, 3, {})
+  repo.setHeadDetached(parentCommit)
+  await Git.Checkout.tree(repo, parentCommit, { fla: Git.Checkout.STRATEGY.FORCE })
 
   const fqPath = `${repo.workdir().slice(0, -1)}/${path}`
   rimraf.sync(`${fqPath}/*`)
