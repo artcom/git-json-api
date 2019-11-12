@@ -1,6 +1,6 @@
 # Git JSON API
 
-A JSON API to serve the contents of JSON5 files from a Git repo. All files in the repo are expected to be JSON5 files with a `.json` extension.
+A JSON API to serve the contents of JSON files from a Git repo. All files in the repo are expected to be JSON files with a `.json` extension.
 
 ## Configuration
 
@@ -9,25 +9,7 @@ A JSON API to serve the contents of JSON5 files from a Git repo. All files in th
 The service can be configured using these environment variables:
 
 * `REPO_URI` _(required)_ URI of the Git repository
-* `SIGNATURE_NAME` _(optional)_ Name used for generated commits
 * `SIGNATURE_MAIL` _(optional)_ E-mail address used for generated commits
-
-### schema.json
-
-The Git repo must contain a file named `schema.json` in the root directory. It describes the directory structure of the repo by defining a list of glob patterns. Any file in the repository should be matched by one of the glob patterns.
-
-#### Example
-
-```json
-{
-  "files": [
-    "some-directory/*",
-    "other-directory/*/file"
-  ]
-}
-```
-
-In this example, the repo could contain files like `some-directory/foo.json`, `some-directory/foo.json`, `other-directory/a/file.json` or `other-directory/b/file.json`.
 
 ## API
 
@@ -35,7 +17,7 @@ In this example, the repo could contain files like `some-directory/foo.json`, `s
 
 Returns the contents of the repo at the given version as a single JSON object.
 
-Version can either be a Git commit hash or `master`. The response will contain the Git commit hash in the `Git-Commit-Hash` header.
+Version can either be a Git commit hash or a reference. The response will contain the Git commit hash in the `Git-Commit-Hash` header.
 
 The returned object contains the contents of every file in the root of the repo in a property named like the file (without extension). For every directory, it contains another object with the same structure.
 
@@ -75,41 +57,40 @@ Optionally, the previous route can be called with an additional path to a file o
 }
 ```
 
-### `GET /:version[/path]?index=false`
+### `PUT /:version/path`
 
-Additionally, a query parameter `index=false` can be attached to receive a transformed json response, which does not include the `index` file keys. This is useful for most client applications that need to process only the pure data.
+The content of a directory or single file can be replaced using a PUT request. The body is expected to contain JSON data for all files and subdirectories or a file. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `POST /:version/path`.
 
-Response (default):
+A new Git commit will be created and merged if necessary. The response will contain the hash of the new (merge) commit in the `Git-Commit-Hash` header. If the merge fails, an error will be returned.
 
-```
-"directory" : {
-  "index": {
-    "foo": "bar"
-  },
-  "subDirectory": {
-    "index": {
-      "foo": "bar"
+#### Examples
+
+Directory replacement:
+
+```json
+// PUT <url>/master/directory
+{
+  "files": {
+    "fileA": {
+      "foo": "baz"
+    },
+    "subDirectory": {
+      "fileB": {
+        "spam": "apples"
+      }
     }
   }
 }
 ```
 
-Response (with `?index=false`):
-
-```
-"directory" : {
-  "foo": "bar",
-  "subDirectory": {
-    "foo": "bar"
-  }
+Single file replacement:
+```json
+// PUT <url>/master/file1
+{
+  "min": 10,
+  "max": 30
 }
 ```
-
-### `POST /:version/path`
-
-The content of a directory can be modified using a POST request. The body is expected to contain JSON data for all files and subdirectories. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `POST /:version/path`. To ensure consistency, only Git commit hashes are accepted for the version parameter in this case.
-
-A new Git commit will be created and merged if necessary. The response will contain the hash of the new (merge) commit in the `Git-Commit-Hash` header. If the merge fails, an error will be returned.
 
 ## Development Setup
 
