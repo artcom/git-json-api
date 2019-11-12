@@ -73,16 +73,25 @@ module.exports = class Repo {
 
       await checkoutCommit(this.repo, parentCommit)
       await replaceFunc()
-      const newTreeOid = await writeIndexTree(this.repo)
 
-      const commitHash = await commitAndMerge(
-        this.repo,
-        parentCommit,
-        branchCommit,
-        newTreeOid,
-        author,
-        `Update '${path}'`
-      )
+      const diff = await Git.Diff.treeToWorkdir(this.repo, await parentCommit.getTree())
+
+      let commitHash
+      if (diff.numDeltas() > 0) {
+        const newTreeOid = await writeIndexTree(this.repo)
+
+        commitHash = await commitAndMerge(
+          this.repo,
+          parentCommit,
+          branchCommit,
+          newTreeOid,
+          author,
+          `Update '${path}'`
+        )
+      } else {
+        commitHash = parentCommit.sha()
+      }
+
       await pushHeadToOrigin(this.repo, updateBranch || parentVersion)
 
       this.lock.unlock()
