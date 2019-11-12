@@ -34,7 +34,7 @@ module.exports = function routes(repo, log) {
 
       log.info(
         { author, authorName, content, files, ip, parent, path, updateBranch },
-        "Request received"
+        "Put request received"
       )
 
       let commitHash
