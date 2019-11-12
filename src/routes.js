@@ -26,14 +26,27 @@ module.exports = function routes(repo, log) {
   }
 
   async function putData({ body, ip, params }, response) {
-    const path = params[0] || ""
-    const parent = params.parent
-    const { updateBranch, files, content } = body
-
-    log.info({ ip, parent, updateBranch, path, files, content }, "Update request received")
-
     try {
-      const commitHash = await repo.putData(parent, updateBranch, path, { files, content })
+      const path = params[0] || ""
+      const parent = params.parent
+      const { author, content, files, updateBranch } = body
+      const authorName = `${author || "Request"} from ${ip}`
+
+      log.info(
+        { author, authorName, content, files, ip, parent, path, updateBranch },
+        "Request received"
+      )
+
+      let commitHash
+      if (files) {
+        commitHash = await repo.replaceDirectory(parent, updateBranch, path, authorName, files)
+      } else {
+        if (content) {
+          commitHash = await repo.replaceFile(parent, updateBranch, path, authorName, content)
+        } else {
+          throw new Error("Missing 'files' or 'content'")
+        }
+      }
 
       response.setHeader("Git-Commit-Hash", commitHash)
       response.end()

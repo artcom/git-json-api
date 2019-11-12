@@ -2,7 +2,7 @@ const Repo = require("../src/repo")
 
 const { copyAll, createGitFunctions, createTempDir } = require("./helpers")
 
-describe("Update Data", () => {
+describe("replace Data", () => {
   let repo
   let originRepoDir
   let masterCommitHash
@@ -37,13 +37,13 @@ describe("Update Data", () => {
     await repo.init()
   })
 
-  test("update root file on master", async () => {
+  test("replace root file on master", async () => {
     const files = {
       "rootFile": { foo: "baz" },
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    const newCommitHash = await repo.putData("master", "master", "", { files })
+    const newCommitHash = await repo.replaceDirectory("master", "master", "", "test", files)
     const commitHashResult = await repo.getData(newCommitHash, "", true)
     const masterResult = await repo.getData("master", "", true)
 
@@ -53,10 +53,10 @@ describe("Update Data", () => {
     expect(masterResult.commitHash).toEqual(newCommitHash)
   })
 
-  test("update root file content on master", async () => {
+  test("replace root file content on master", async () => {
     const content = { foo: "baz" }
 
-    const newCommitHash = await repo.putData("master", "master", "rootFile", { content })
+    const newCommitHash = await repo.replaceFile("master", "master", "rootFile", "test", content)
     const commitHashResult = await repo.getData(newCommitHash, "rootFile", false)
     const masterResult = await repo.getData("master", "rootFile", false)
 
@@ -66,12 +66,12 @@ describe("Update Data", () => {
     expect(masterResult.commitHash).toEqual(newCommitHash)
   })
 
-  test("update nested file on master", async () => {
+  test("replace nested file on master", async () => {
     const files = {
       nestedFile1: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.putData("master", "master", "dir", { files })
+    const newCommitHash = await repo.replaceDirectory("master", "master", "dir", "test", files)
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
     const masterResult = await repo.getData("master", "dir", true)
 
@@ -81,13 +81,14 @@ describe("Update Data", () => {
     expect(masterResult.commitHash).toEqual(newCommitHash)
   })
 
-  test("update files on branch", async () => {
+  test("replace files on branch", async () => {
     const files = {
       nestedFile1: { foo: "bar" },
       nestedFile2: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.putData(branchCommitHash, "branch", "dir", { files })
+    const newCommitHash =
+      await repo.replaceDirectory(branchCommitHash, "branch", "dir", "test", files)
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
     const masterResult = await repo.getData("branch", "dir", true)
 
@@ -102,17 +103,16 @@ describe("Update Data", () => {
       "rootFile": { foo: "changed" },
       "dir/nestedFile1": { foo: "bar" }
     }
-    await repo.putData(masterCommitHash, "master", "", { files: files1 })
+    await repo.replaceDirectory(masterCommitHash, "master", "", "test", files1)
 
     const files2 = {
       "rootFile": { foo: "bar" },
       "dir/nestedFile1": { foo: "changed" }
     }
     const mergeCommitHash =
-      await repo.putData(masterCommitHash, "master", "", { files: files2 })
+      await repo.replaceDirectory(masterCommitHash, "master", "", "test", files2)
 
     const { data } = await repo.getData(mergeCommitHash, "", true)
-
     expect(data).toEqual({
       "rootFile": { foo: "changed" },
       "dir/nestedFile1": { foo: "changed" }
@@ -126,14 +126,14 @@ describe("Update Data", () => {
       "rootFile": { foo: "change1" },
       "dir/nestedFile1": { foo: "bar" }
     }
-    await repo.putData(masterCommitHash, "master", "", { files: files1 })
+    await repo.replaceDirectory(masterCommitHash, "master", "", "test", files1)
 
     const files2 = {
       "rootFile": { foo: "change2" },
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    return repo.putData(masterCommitHash, "master", "", { files: files2 })
+    return repo.replaceDirectory(masterCommitHash, "master", "", "test", files2)
       .catch(e => {
         expect(e.message).toBe(
           `Merge conflict
@@ -150,13 +150,13 @@ rootFile.json
       })
   })
 
-  test("update files on master parent with undefined update branch", async () => {
+  test("replace files on master parent with undefined update branch", async () => {
     const files = {
       nestedFile1: { foo: "bar" },
       nestedFile2: { foo: "baz" }
     }
 
-    const newCommitHash = await repo.putData("master", undefined, "dir", { files })
+    const newCommitHash = await repo.replaceDirectory("master", undefined, "dir", "test", files)
     const commitHashResult = await repo.getData(newCommitHash, "dir", true)
 
     expect(commitHashResult.data).toEqual(files)
@@ -171,18 +171,9 @@ rootFile.json
       "dir/nestedFile1": { foo: "bar" }
     }
 
-    return repo.putData(masterCommitHash, undefined, "", { files })
+    return repo.replaceDirectory(masterCommitHash, undefined, "", "test", files)
       .catch(e => {
         expect(e.message).toBe("Invalid or missing update branch")
-      })
-  })
-
-  test("return error if 'files' or 'content' is missing", async () => {
-    expect.assertions(1)
-
-    return repo.putData("master", "master", "", {})
-      .catch(e => {
-        expect(e.message).toBe("Missing 'files' or 'content'")
       })
   })
 })

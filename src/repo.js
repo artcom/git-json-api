@@ -44,21 +44,43 @@ module.exports = class Repo {
     }
   }
 
-  async putData(parentVersion, updateBranch, path, { files, content }) {
+  async replaceDirectory(parentVersion, updateBranch, path, author, files) {
+    return this.replace(parentVersion, updateBranch, path, author, () => {
+      // clear directory first
+      rimraf.sync(`${this.repo.workdir()}${path}/*`)
+
+      for (const file of Object.keys(files)) {
+        fse.outputJsonSync(`${this.repo.workdir()}${path}/${file}.json`, files[file], { spaces: 2 })
+      }
+    })
+  }
+
+  async replaceFile(parentVersion, updateBranch, path, author, content) {
+    return this.replace(parentVersion, updateBranch, path, author, () =>
+      fse.outputJsonSync(`${this.repo.workdir()}${path}.json`, content, { spaces: 2 })
+    )
+  }
+
+  async replace(parentVersion, updateBranch, path, author, replaceFunc) {
     try {
       await this.lock.lock()
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
-      const newTreeOid = await put(this.repo, parentCommit, path, { files, content })
+
+      await checkoutCommit(this.repo, parentCommit)
+      await replaceFunc()
+      const newTreeOid = await writeIndexTree(this.repo)
+
       const commitHash = await commitAndMerge(
         this.repo,
         parentCommit,
         branchCommit,
         newTreeOid,
-        `Update '/${path}'`
+        author,
+        `Update '${path}'`
       )
-      await pushHeadToOrigin(this.repo, updateBranch)
+      await pushHeadToOrigin(this.repo, updateBranch || parentVersion)
 
       this.lock.unlock()
 
@@ -81,42 +103,25 @@ async function getCommitByVersion(repo, version) {
     .catch(() => { throw new Error(`Branch or commit not found: '${version}'`) })
 }
 
-async function put(repo, parentCommit, path, { files, content }) {
-  repo.setHeadDetached(parentCommit)
-  await Git.Checkout.tree(repo, parentCommit, {
+async function checkoutCommit(repo, commit) {
+  repo.setHeadDetached(commit)
+  await Git.Checkout.tree(repo, commit, {
     checkoutStrategy:
       Git.Checkout.STRATEGY.FORCE |
       Git.Checkout.STRATEGY.REMOVE_UNTRACKED |
       Git.Checkout.STRATEGY.REMOVE_IGNORED
   })
+}
 
-  if (files) {
-    // clear directory first
-    rimraf.sync(`${repo.workdir()}${path}/*`)
-
-    for (const file of Object.keys(files)) {
-      outputJsonFile(repo.workdir(), `${path}/${file}`, files[file])
-    }
-  } else {
-    if (content) {
-      outputJsonFile(repo.workdir(), path, content)
-    } else {
-      throw new Error("Missing 'files' or 'content'")
-    }
-  }
-
+async function writeIndexTree(repo) {
   const index = await repo.refreshIndex()
   await index.addAll()
   await index.write()
-  return await index.writeTree()
+  return index.writeTree()
 }
 
-function outputJsonFile(workDir, filepath, content) {
-  fse.outputJsonSync(`${workDir}${filepath}.json`, content, { spaces: 2 })
-}
-
-async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message) {
-  const commitSignature = createSignature()
+async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, author, message) {
+  const commitSignature = createSignature(author)
   const commitOid = await repo.createCommit(
     "HEAD",
     commitSignature,
@@ -136,7 +141,7 @@ async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message
       const conflictReport = await createConflictReport(repo, index)
       throw new Error(`Merge conflict\n\n${conflictReport}`)
     } else {
-      const mergeSignature = createSignature()
+      const mergeSignature = createSignature(author)
       const mergeTreeOid = await index.writeTreeTo(repo)
       const mergeCommitOid = await repo.createCommit(
         "HEAD",
@@ -153,11 +158,8 @@ async function commitAndMerge(repo, parentCommit, branchCommit, treeOid, message
   }
 }
 
-function createSignature() {
-  return Git.Signature.now(
-    process.env.SIGNATURE_NAME || "Git JSON API",
-    process.env.SIGNATURE_MAIL || "mail@example.com"
-  )
+function createSignature(author) {
+  return Git.Signature.now(author, process.env.SIGNATURE_MAIL || "mail@example.com")
 }
 
 async function pushHeadToOrigin(repo, branch) {
