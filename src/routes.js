@@ -1,4 +1,5 @@
 const express = require("express")
+const Path = require("path")
 
 module.exports = function routes(repo, log) {
   return new express.Router()
@@ -27,24 +28,27 @@ module.exports = function routes(repo, log) {
 
   async function putData({ body, ip, params }, response) {
     try {
-      const path = params[0] || ""
+      const providedPath = params[0] || ""
       const parent = params.parent
-      const { author, content, files, updateBranch } = body
-      const authorName = `${author || "Request"} from ${ip}`
+      const { author: providedAuthor, fileContent, files, updateBranch } = body
 
       log.info(
-        { author, authorName, content, files, ip, parent, path, updateBranch },
+        { providedAuthor, fileContent, files, ip, parent, providedPath, updateBranch },
         "Put request received"
       )
 
+      const { dir, base } = Path.parse(providedPath)
+      const path = Path.join(dir, base)
+      const author = `${providedAuthor || "Request"} from ${ip}`
+
       let commitHash
       if (files) {
-        commitHash = await repo.replaceDirectory(parent, updateBranch, path, authorName, files)
+        commitHash = await repo.replaceDirectory(parent, updateBranch, path, author, files)
       } else {
-        if (content) {
-          commitHash = await repo.replaceFile(parent, updateBranch, path, authorName, content)
+        if (fileContent) {
+          commitHash = await repo.replaceFile(parent, updateBranch, path, author, fileContent)
         } else {
-          throw new Error("Missing 'files' or 'content'")
+          throw new Error("Missing 'files' or 'fileContent'")
         }
       }
 
