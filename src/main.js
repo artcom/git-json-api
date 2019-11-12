@@ -1,5 +1,5 @@
 const bodyParser = require("body-parser")
-const bunyan = require("bunyan")
+const Logger = require("bunyan")
 const cors = require("cors")
 const express = require("express")
 
@@ -7,7 +7,12 @@ const Repo = require("./repo")
 const routes = require("./routes")
 
 const app = express()
-const log = bunyan.createLogger({ name: "git-json-api" })
+
+const log = Logger.createLogger({
+  name: "git-json-api",
+  level: "debug",
+  serializers: { error: Logger.stdSerializers.err }
+})
 const port = process.env.PORT || 3000
 const repoUri = process.env.REPO_URI
 

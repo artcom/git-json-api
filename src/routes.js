@@ -21,7 +21,7 @@ module.exports = function routes(repo, log) {
       response.setHeader("Git-Commit-Hash", commitHash)
       response.json(data)
     } catch (error) {
-      log.error({ error: error.message })
+      log.error({ error })
       response.status(error.httpCode || 500).json({ error: error.message })
     }
   }
@@ -55,7 +55,7 @@ module.exports = function routes(repo, log) {
       response.setHeader("Git-Commit-Hash", commitHash)
       response.end()
     } catch (error) {
-      log.error({ error: error.message })
+      log.error({ error })
       response.status(500).json({ error: error.message })
     }
   }
