@@ -28,7 +28,8 @@ module.exports = class Repo {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin")
+      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
+
       const commit = await getCommitByVersion(this.repo, version)
       await this.cache.update(commit)
 
@@ -64,6 +65,8 @@ module.exports = class Repo {
   async replace(parentVersion, updateBranch, path, author, replaceFunc) {
     try {
       await this.lock.lock()
+
+      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
