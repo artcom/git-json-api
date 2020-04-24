@@ -50,7 +50,11 @@ module.exports = class Cache {
     // therefore subsequent entries with the same path override previous entries
     for (const entry of fileEntries) {
       const blob = await entry.getBlob()
-      const fileData = JSON5.parse(blob.content())
+      const content = process.env.BACKEND_HOST
+        ? blob.content().replace(/\${backendHost}/g, process.env.BACKEND_HOST)
+        : blob.content()
+
+      const fileData = JSON5.parse(content)
       const filepath = removeFileExtension(entry.path())
 
       files[filepath] = fileData
