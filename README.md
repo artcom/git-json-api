@@ -87,8 +87,10 @@ Single file replacement:
 ```json
 // PUT <url>/master/file1
 {
-  "min": 10,
-  "max": 30
+  "fileContent" : {
+    "min": 10,
+    "max": 30
+  }
 }
 ```
 
