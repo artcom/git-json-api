@@ -14,13 +14,25 @@ module.exports = class Repo {
     this.repo = null
     this.lock = new Lock()
     this.cache = new Cache()
+
+    const isMacos = process.platform === "darwin"
+    const callbacks = isMacos ? {
+      certificateCheck: function certificateCheckForMacos() { return 0 }
+    } : {}
+
+    if (process.env.REPO_TOKEN) {
+      callbacks.credentials = function credentials() {
+        return Git.Cred.userpassPlaintextNew(process.env.REPO_TOKEN, "x-oauth-basic")
+      }
+    }
+    this.fetchOpts = { callbacks }
   }
 
   async init() {
     try {
       this.repo = await Git.Repository.open(this.path)
     } catch (error) {
-      this.repo = await Git.Clone.clone(this.uri, this.path)
+      this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
     }
   }
 
@@ -28,7 +40,10 @@ module.exports = class Repo {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
+      await this.repo.fetch("origin", {
+        prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE,
+        callbacks: this.fetchOpts.callbacks
+      })
 
       const commit = await getCommitByVersion(this.repo, version)
       await this.cache.update(commit)
@@ -66,7 +81,10 @@ module.exports = class Repo {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
+      await this.repo.fetch("origin", {
+        prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE,
+        callbacks: this.fetchOpts.callbacks
+      })
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
@@ -92,7 +110,7 @@ module.exports = class Repo {
         commitHash = parentCommit.sha()
       }
 
-      await pushHeadToOrigin(this.repo, updateBranch || parentVersion)
+      await pushHeadToOrigin(this.repo, updateBranch || parentVersion, this.fetchOpts)
 
       this.lock.unlock()
 
@@ -174,9 +192,9 @@ function createSignature(author) {
   return Git.Signature.now(author, process.env.SIGNATURE_MAIL || "mail@example.com")
 }
 
-async function pushHeadToOrigin(repo, branch) {
+async function pushHeadToOrigin(repo, branch, fetchOpts) {
   const remote = await repo.getRemote("origin")
-  await remote.push(`HEAD:refs/heads/${branch}`, null)
+  await remote.push(`HEAD:refs/heads/${branch}`, fetchOpts)
 
   // remote.push() does not reject nor return an error code which is a bug
   // therefore we check the new commits manually
