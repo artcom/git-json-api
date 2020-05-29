@@ -10,6 +10,7 @@ The service can be configured using these environment variables:
 
 * `REPO_URI` _(required)_ URI of the Git repository
 * `SIGNATURE_MAIL` _(optional)_ E-mail address used for generated commits
+* `REPO_TOKEN` _(optional)_ Token for accessing private repo
 
 ## API
 
