@@ -17,13 +17,13 @@ module.exports = class Repo {
 
     const isMacos = process.platform === "darwin"
     const callbacks = isMacos ? {
-      certificateCheck: function certificateCheckForMacos() { return 0 }
+      certificateCheck: () => 0
     } : {}
 
     if (process.env.REPO_TOKEN) {
-      callbacks.credentials = function credentials() {
-        return Git.Cred.userpassPlaintextNew(process.env.REPO_TOKEN, "x-oauth-basic")
-      }
+      callbacks.credentials = () => Git.Cred.userpassPlaintextNew(
+        process.env.REPO_TOKEN,
+        "x-oauth-basic")
     }
     this.fetchOpts = { callbacks }
   }
