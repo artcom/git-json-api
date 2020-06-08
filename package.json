@@ -1,6 +1,6 @@
 {
   "name": "git-json-api",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "repository": "artcom/git-json-api",
   "license": "MIT",
   "scripts": {
