@@ -1,5 +1,6 @@
-const fse = require("fs-extra")
-const Git = require("nodegit")
+const git = require("isomorphic-git")
+const http = require("isomorphic-git/http/node")
+const fs = require("fs-extra")
 const rimraf = require("rimraf")
 
 const Cache = require("./cache")
@@ -8,29 +9,30 @@ const Lock = require("./lock")
 const CONFLICT_REGEXP = /(?:[^\r\n]*\n)?<<<<<<< ours[\s\S]*?>>>>>>> theirs(?:\n[^\r\n]*)?/g
 
 module.exports = class Repo {
-  constructor(uri, path) {
+  constructor(uri, dir) {
     this.uri = uri
-    this.path = path
-    this.repo = null
+    this.dir = dir
     this.lock = new Lock()
     this.cache = new Cache()
   }
 
   async init() {
-    try {
-      this.repo = await Git.Repository.open(this.path)
-    } catch (error) {
-      this.repo = await Git.Clone.clone(this.uri, this.path)
-    }
+    const { dir } = this
+    const { GIT_REPO_URI, GIT_USER_NAME, GIT_USER_EMAIL } = process.env
+
+    await fs.remove(dir)
+    await git.clone({ fs, http, dir, url: GIT_REPO_URI })
+    await git.setConfig({ fs, dir, path: "user.name", value: GIT_USER_NAME })
+    await git.setConfig({ fs, dir, path: "user.email", value: GIT_USER_EMAIL })
   }
 
   async getData(version, path, listFiles) {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
+      await git.fetch({ fs, http, dir: this.dir, prune: true, pruneTags: true })
 
-      const commit = await getCommitByVersion(this.repo, version)
+      const commit = await getCommitByVersion(version)
       await this.cache.update(commit)
 
       this.lock.unlock()
@@ -51,14 +53,14 @@ module.exports = class Repo {
       rimraf.sync(`${this.repo.workdir()}${path}/*`)
 
       for (const file of Object.keys(files)) {
-        fse.outputJsonSync(`${this.repo.workdir()}${path}/${file}.json`, files[file], { spaces: 2 })
+        fs.outputJsonSync(`${this.repo.workdir()}${path}/${file}.json`, files[file], { spaces: 2 })
       }
     })
   }
 
   async replaceFile(parentVersion, updateBranch, path, author, content) {
     return this.replace(parentVersion, updateBranch, path, author, () =>
-      fse.outputJsonSync(`${this.repo.workdir()}${path}.json`, content, { spaces: 2 })
+      fs.outputJsonSync(`${this.repo.workdir()}${path}.json`, content, { spaces: 2 })
     )
   }
 
@@ -66,7 +68,7 @@ module.exports = class Repo {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin", { prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE })
+      await git.fetch({ fs, http, dir: this.dir, prune: true, pruneTags: true })
 
       const parentCommit = await getCommitByVersion(this.repo, parentVersion)
       const branchCommit = await getCommitForUpdateBranch(this.repo, updateBranch || parentVersion)
@@ -201,7 +203,7 @@ async function createConflictReport(repo, index) {
     .map(entry => entry.path)
     .filter((path, indexOfPath, self) => self.indexOf(path) === indexOfPath) // unique
     .map(path => {
-      const content = fse.readFileSync(`${repo.workdir()}${path}`, "utf-8")
+      const content = fs.readFileSync(`${repo.workdir()}${path}`, "utf-8")
       const conflicts = [...content.matchAll(CONFLICT_REGEXP)].map(([conflict]) => conflict)
       return `${path}\n\n${conflicts.join("\n\n")}`
     }).join("\n\n")
