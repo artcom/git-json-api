@@ -21,6 +21,7 @@ describe("Get Data", () => {
   let masterCommitHash
   let branch1CommitHash
   let branch2CommitHash
+  let branch3CommitHash
 
   beforeAll(async () => {
     originRepoDir = createTempDir() // bare origin repo
@@ -50,6 +51,15 @@ describe("Get Data", () => {
       nestedFile1: "shouldBeOverwrittenByFilesInSubdirectory"
     })
     git("push", "origin", "branch2")
+
+    git("checkout", "master")
+
+    git("branch", "branch3")
+    git("checkout", "branch3")
+    branch3CommitHash = commit("dir/index.json", {
+      indexFile: "indexFileValue"
+    })
+    git("push", "origin", "branch3")
   })
 
   beforeEach(async () => {
@@ -115,6 +125,20 @@ describe("Get Data", () => {
 
       expect(commitHash).toBe(masterCommitHash)
       expect(data).toEqual("bar")
+    })
+
+    test("merges 'index' file data into parent JSON node", async () => {
+      const { commitHash, data } = await repo.getData("branch3", "dir", false)
+
+      expect(commitHash).toBe(branch3CommitHash)
+      expect(data).toEqual({
+        nestedFile1: {
+          foo: "bar",
+          number: 1
+        },
+        nestedFile2: ["one", "two", "three"],
+        indexFile: "indexFileValue"
+      })
     })
 
     test("returns data for commit hash", async () => {

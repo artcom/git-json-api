@@ -1,5 +1,7 @@
 const JSON5 = require("json5")
 const get = require("lodash.get")
+const isPlainObject = require("lodash.isplainobject")
+const isUndefined = require("lodash.isundefined")
 const mapKeys = require("lodash.mapkeys")
 const Path = require("path")
 const pickBy = require("lodash.pickby")
@@ -59,7 +61,27 @@ module.exports = class Cache {
       const filepath = removeFileExtension(entry.path())
 
       files[filepath] = fileData
-      set(object, filepath.split(Path.sep), fileData)
+      const path = filepath.split(Path.sep)
+
+      // transform "index" file content into parent node
+      if (filepath.endsWith("/index")) {
+        // remove "index" from path
+        path.pop()
+
+        const data = get(object, path)
+        if (isUndefined(data)) {
+          set(object, path, fileData)
+        } else {
+          if (isPlainObject(fileData)) {
+            // merge index files into parent node
+            const merged = { ...fileData, ...data }
+            set(object, path, merged)
+          }
+          // else: ignore unmergable fileData
+        }
+      } else {
+        set(object, path, fileData)
+      }
     }
 
     return { object, files }
