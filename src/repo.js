@@ -92,7 +92,9 @@ module.exports = class Repo {
       await checkoutCommit(this.repo, parentCommit)
       await replaceFunc()
 
-      const diff = await Git.Diff.treeToWorkdir(this.repo, await parentCommit.getTree())
+      const opts = new Git.DiffOptions()
+      opts.flags |= Git.Diff.OPTION.INCLUDE_UNTRACKED
+      const diff = await Git.Diff.treeToWorkdir(this.repo, await parentCommit.getTree(), opts)
 
       let commitHash
       if (diff.numDeltas() > 0) {
