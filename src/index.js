@@ -17,7 +17,7 @@ const port = process.env.PORT || 3000
 const repoUri = process.env.REPO_URI
 
 if (!repoUri) {
-  log.fatal("REPO environment variable must be set")
+  log.fatal("REPO_URI environment variable must be set")
   process.exit(1)
 }
 
