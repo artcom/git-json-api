@@ -60,10 +60,11 @@ module.exports = class Cache {
       const fileData = JSON5.parse(expandedContent)
       const filepath = removeFileExtension(entry.path())
 
-      files[filepath] = fileData
-      const path = filepath.split(Path.sep)
+      // we parse again to get independent (cloned) data for files
+      files[filepath] = JSON5.parse(expandedContent)
 
       // transform "index" file content into parent node
+      const path = filepath.split(Path.sep)
       if (filepath.endsWith("/index")) {
         // remove "index" from path
         path.pop()

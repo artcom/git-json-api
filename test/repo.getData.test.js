@@ -213,6 +213,26 @@ describe("Get Data", () => {
       })
     })
 
+    test.only("returns files for branch with index file", async () => {
+      const { commitHash, data } = await repo.getData("branch3", "", true)
+
+      expect(commitHash).toBe(branch3CommitHash)
+      expect(data).toEqual({
+        "rootFile": {
+          foo: "bar",
+          number: { baz: "foo" }
+        },
+        "dir/index": {
+          indexFile: "indexFileValue",
+        },
+        "dir/nestedFile1": {
+          foo: "bar",
+          number: 1
+        },
+        "dir/nestedFile2": ["one", "two", "three"]
+      })
+    })
+
     test("returns files for commit hash", async () => {
       const { commitHash, data } = await repo.getData(oldCommitHash, "", true)
 
