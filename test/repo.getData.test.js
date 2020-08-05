@@ -213,7 +213,7 @@ describe("Get Data", () => {
       })
     })
 
-    test.only("returns files for branch with index file", async () => {
+    test("returns files for branch with index file", async () => {
       const { commitHash, data } = await repo.getData("branch3", "", true)
 
       expect(commitHash).toBe(branch3CommitHash)
