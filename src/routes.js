@@ -33,7 +33,7 @@ module.exports = function routes(repo, log) {
       const { author: providedAuthor, fileContent, files, updateBranch } = body
 
       log.info(
-        { providedAuthor, fileContent, files, ip, parent, providedPath, updateBranch },
+        { providedAuthor, ip, parent, providedPath, updateBranch },
         "Put request received"
       )
 
