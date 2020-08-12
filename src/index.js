@@ -1,4 +1,3 @@
-const bodyParser = require("body-parser")
 const Logger = require("bunyan")
 const cors = require("cors")
 const express = require("express")
@@ -23,8 +22,7 @@ if (!repoUri) {
 
 const repo = new Repo(repoUri, "./.repo")
 repo.init()
-
-app.use(bodyParser.json({ limit: process.env.BODY_SIZE_LIMIT || "100kb" }))
+app.use(express.text({ type: "application/json", limit: process.env.BODY_SIZE_LIMIT || "100kb" }))
 app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
 app.set("trust proxy", true)
 app.use("/", routes(repo, log))

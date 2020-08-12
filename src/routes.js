@@ -1,6 +1,8 @@
 const express = require("express")
 const Path = require("path")
 
+const { replaceValuesWithVariables } = require("./variables")
+
 module.exports = function routes(repo, log) {
   return new express.Router()
     .get("/:version", getData)
@@ -30,7 +32,9 @@ module.exports = function routes(repo, log) {
     try {
       const providedPath = params[0] || ""
       const parent = params.parent
-      const { author: providedAuthor, fileContent, files, updateBranch } = body
+
+      const { author: providedAuthor, fileContent, files, updateBranch } =
+        JSON.parse(replaceValuesWithVariables(body))
 
       log.info(
         { providedAuthor, ip, parent, providedPath, updateBranch },
