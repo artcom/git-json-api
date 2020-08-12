@@ -7,6 +7,7 @@ const Path = require("path")
 const pickBy = require("lodash.pickby")
 const set = require("lodash.set")
 
+const { replaceVariablesWithValues } = require("./variables")
 /*
   Only caches data and files of the last requested commit.
 */
@@ -52,16 +53,13 @@ module.exports = class Cache {
     // therefore subsequent entries with the same path override previous entries
     for (const entry of fileEntries) {
       const blob = await entry.getBlob()
-      const content = new TextDecoder("utf-8").decode(blob.content())
-      const expandedContent = process.env.BACKEND_HOST
-        ? content.replace(/\${backendHost}/g, process.env.BACKEND_HOST)
-        : content
+      const content = replaceVariablesWithValues(new TextDecoder("utf-8").decode(blob.content()))
 
-      const fileData = JSON5.parse(expandedContent)
+      const fileData = JSON5.parse(content)
       const filepath = removeFileExtension(entry.path())
 
       // we parse again to get independent (cloned) data for files
-      files[filepath] = JSON5.parse(expandedContent)
+      files[filepath] = JSON5.parse(content)
 
       // transform "index" file content into parent node
       const path = filepath.split(Path.sep)
