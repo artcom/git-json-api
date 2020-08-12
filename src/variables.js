@@ -1,11 +1,15 @@
-module.exports.replaceVariablesWithValues = content => process.env.BACKEND_HOST
-  ? content.replace(/\${backendHost}/g, process.env.BACKEND_HOST)
-  : content
+module.exports.replaceVariablesWithValues = content => {
+  if (process.env.BACKEND_URL) {
+    return content.replace(/\${backendUrl}/g, process.env.BACKEND_URL)
+  } else {
+    return content
+  }
+}
 
 module.exports.replaceValuesWithVariables = content => {
-  if (process.env.BACKEND_HOST) {
-    const regExp = new RegExp(process.env.BACKEND_HOST, "g")
-    return JSON.parse(JSON.stringify(content).replace(regExp, "${backendHost}"))
+  if (process.env.BACKEND_URL) {
+    const regExp = new RegExp(process.env.BACKEND_URL, "g")
+    return JSON.parse(JSON.stringify(content).replace(regExp, "${backendUrl}"))
   } else {
     return content
   }
