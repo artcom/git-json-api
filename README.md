@@ -9,6 +9,7 @@ A JSON API to serve the contents of JSON files from a Git repo. All files in the
 The service can be configured using these environment variables:
 
 * `REPO_URI` _(required)_ URI of the Git repository
+* `BACKEND_HOST` _(optional)_ Value of the host variable `${backendHost}` which is replaced on read and write operations to support asset uris in multiple environments.
 * `SIGNATURE_MAIL` _(optional)_ E-mail address used for generated commits
 * `REPO_TOKEN` _(optional)_ Token for accessing private repo
 
@@ -25,6 +26,7 @@ The returned object contains the contents of every file in the root of the repo 
 If a repo contains `file1.json`, `file2.json`, `directory/fileA.json` and `directory/subDirectory/fileB.json`, the response would be structured as follows:
 
 ```json
+// GET <url>/master
 {
   "directory" : {
     "fileA": {
@@ -32,7 +34,7 @@ If a repo contains `file1.json`, `file2.json`, `directory/fileA.json` and `direc
     },
     "subDirectory": {
       "fileB": {
-        "spam": "eggs"
+        "foo": "bar"
       }
     }
   },
@@ -50,9 +52,10 @@ If a repo contains `file1.json`, `file2.json`, `directory/fileA.json` and `direc
 
 ### `GET /:version/path`
 
-Optionally, the previous route can be called with an additional path to a file or directory in the repo to retrieve an excerpt of the data. In the above example, `/:version/directory/fileA` would return:
+Optionally, the previous route can be called with an additional path into the content to retrieve specific data.
 
 ```json
+// GET <url>/master/directory/fileA
 {
   "foo": "bar"
 }
@@ -60,31 +63,30 @@ Optionally, the previous route can be called with an additional path to a file o
 
 ### `PUT /:version/path`
 
-The content of a directory or single file can be replaced using a PUT request. The body is expected to contain JSON data for all files and subdirectories or a file. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `POST /:version/path`.
+The content of a directory or single file can be replaced using a PUT request. The body is expected to contain JSON data for all files and subdirectories or a file. The intended workflow is to query a path using `GET /:version/path`, make the desired changes to the data and send the whole data back via `PUT /:parentVersion/path`.
 
 A new Git commit will be created and merged if necessary. The response will contain the hash of the new (merge) commit in the `Git-Commit-Hash` header. If the merge fails, an error will be returned.
 
 #### Examples
 
-Directory replacement:
+The body to replace everything inside directory looks like this:
 
 ```json
 // PUT <url>/master/directory
 {
   "files": {
     "fileA": {
-      "foo": "baz"
+      "foo": "bar"
     },
-    "subDirectory": {
-      "fileB": {
-        "spam": "apples"
+    "subDirectory/fileB": {
+        "foo": "bar"
       }
     }
   }
 }
 ```
 
-Single file replacement:
+The body to replace a single file only looks like this:
 ```json
 // PUT <url>/master/file1
 {
@@ -95,13 +97,23 @@ Single file replacement:
 }
 ```
 
+Additional properties are:  
+`author`: Will be used as commit author.  
+`updateBranch`: The branch which should be updated to the new commit (default: "master").
+
 ## Development Setup
 
-```bash
+```bahs
 npm install
 REPO_URI=<repo-url> npm run watch
 ```
 
 ## Deployment
 
+### Heroku/Dokku
+
 The service is designed to be deployed using [Dokku](http://dokku.viewdocs.io/dokku/) and will probably also work with [Heroku](https://www.heroku.com/) and other compatible platforms.
+
+### Dockerfile
+
+The service contains a Dockerfile to start it directly with Docker.
