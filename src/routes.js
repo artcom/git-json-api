@@ -33,7 +33,7 @@ module.exports = function routes(repo, log) {
       const providedPath = params[0] || ""
       const parentVersion = params.parentVersion
 
-      const { author: providedAuthor, fileContent, files, updateBranch } =
+      const { author: providedAuthor, fileContent, files, updateBranch = "master" } =
         JSON.parse(replaceValuesWithVariables(body))
 
       log.info(
