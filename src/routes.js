@@ -7,8 +7,8 @@ module.exports = function routes(repo, log) {
   return new express.Router()
     .get("/:version", getData)
     .get("/:version/*", getData)
-    .put("/:parent", putData)
-    .put("/:parent/*", putData)
+    .put("/:parentVersion", putData)
+    .put("/:parentVersion/*", putData)
 
   async function getData({ ip, params, query }, response) {
     const listFiles = query.listFiles === "true"
@@ -31,13 +31,13 @@ module.exports = function routes(repo, log) {
   async function putData({ body, ip, params }, response) {
     try {
       const providedPath = params[0] || ""
-      const parent = params.parent
+      const parentVersion = params.parentVersion
 
       const { author: providedAuthor, fileContent, files, updateBranch } =
         JSON.parse(replaceValuesWithVariables(body))
 
       log.info(
-        { providedAuthor, ip, parent, providedPath, updateBranch },
+        { providedAuthor, ip, parentVersion, providedPath, updateBranch },
         "Put request received"
       )
 
@@ -47,10 +47,10 @@ module.exports = function routes(repo, log) {
 
       let commitHash
       if (files) {
-        commitHash = await repo.replaceDirectory(parent, updateBranch, path, author, files)
+        commitHash = await repo.replaceDirectory(parentVersion, updateBranch, path, author, files)
       } else {
         if (fileContent) {
-          commitHash = await repo.replaceFile(parent, updateBranch, path, author, fileContent)
+          commitHash = await repo.replaceFile(parentVersion, updateBranch, path, author, fileContent)
         } else {
           throw new Error("Missing 'files' or 'fileContent'")
         }
