@@ -50,7 +50,13 @@ module.exports = function routes(repo, log) {
         commitHash = await repo.replaceDirectory(parentVersion, updateBranch, path, author, files)
       } else {
         if (fileContent) {
-          commitHash = await repo.replaceFile(parentVersion, updateBranch, path, author, fileContent)
+          commitHash = await repo.replaceFile(
+            parentVersion,
+            updateBranch,
+            path,
+            author,
+            fileContent
+          )
         } else {
           throw new Error("Missing 'files' or 'fileContent'")
         }
