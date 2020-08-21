@@ -5,6 +5,7 @@ const rimraf = require("rimraf")
 const Cache = require("./cache")
 const Lock = require("./lock")
 
+const NEEDS_FETCH_TIMEOUT = 1000
 const CONFLICT_REGEXP = /(?:[^\r\n]*\n)?<<<<<<< ours[\s\S]*?>>>>>>> theirs(?:\n[^\r\n]*)?/g
 
 module.exports = class Repo {
@@ -14,6 +15,7 @@ module.exports = class Repo {
     this.repo = null
     this.lock = new Lock()
     this.cache = new Cache()
+    this.needsFetch = true
 
     const isMacos = process.platform === "darwin"
     const callbacks = isMacos ? {
@@ -40,10 +42,15 @@ module.exports = class Repo {
     try {
       await this.lock.lock()
 
-      await this.repo.fetch("origin", {
-        prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE,
-        callbacks: this.fetchOpts.callbacks
-      })
+      if (this.needsFetch) {
+        await this.repo.fetch("origin", {
+          prune: Git.Fetch.PRUNE.GIT_FETCH_PRUNE,
+          callbacks: this.fetchOpts.callbacks
+        })
+
+        this.needsFetch = false
+        setTimeout(() => { this.needsFetch = true }, NEEDS_FETCH_TIMEOUT)
+      }
 
       const commit = await getCommitByVersion(this.repo, version)
       await this.cache.update(commit)
