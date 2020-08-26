@@ -1,11 +1,13 @@
 const Logger = require("bunyan")
 const cors = require("cors")
 const express = require("express")
+const compression = require("compression")
 
 const Repo = require("./repo")
 const routes = require("./routes")
 
 const app = express()
+app.use(compression())
 
 const log = Logger.createLogger({
   name: "git-json-api",
