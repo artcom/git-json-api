@@ -30,5 +30,5 @@ app.set("trust proxy", true)
 app.use("/", routes(repo, log))
 
 app.listen(port, () => {
-  log.info({ port }, "Up and running")
+  log.info({ port, repoUri: process.env.REPO_URI }, "Up and running")
 })
