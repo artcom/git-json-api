@@ -31,11 +31,9 @@ module.exports = class Repo {
   }
 
   async init() {
-    try {
-      this.repo = await Git.Repository.open(this.path)
-    } catch (error) {
-      this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
-    }
+    // remove directory and clone new to ensure consistency
+    fse.removeSync(this.path)
+    this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
   }
 
   async getData(version, path, listFiles) {
