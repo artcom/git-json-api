@@ -22,7 +22,6 @@ describe("Get Data", () => {
   let branch1CommitHash
   let branch2CommitHash
   let branch3CommitHash
-  let branch4CommitHash
 
   beforeAll(async () => {
     originRepoDir = createTempDir() // bare origin repo
@@ -61,13 +60,6 @@ describe("Get Data", () => {
       indexFile: "indexFileValue"
     })
     git("push", "origin", "branch3")
-
-    git("branch", "branch4")
-    git("checkout", "branch4")
-    branch4CommitHash = commit("dir/fileWithUrl.json", {
-      url: "${backendHost}/foo/bar"
-    })
-    git("push", "origin", "branch4")
   })
 
   beforeEach(async () => {
@@ -184,19 +176,6 @@ describe("Get Data", () => {
           number: 1
         },
         nestedFile2: ["one", "two", "three"]
-      })
-    })
-
-    test("resolves ${backendHost} variable", async () => {
-      process.env.BACKEND_HOST = "http://backendhost.de"
-      const { commitHash, data } = await repo.getData("branch4", "dir", false)
-
-      expect(commitHash).toBe(branch4CommitHash)
-      expect(data).toEqual({
-        indexFile: "indexFileValue",
-        nestedFile1: { foo: "bar", number: 1 },
-        nestedFile2: ["one", "two", "three"],
-        fileWithUrl: { url: "http://backendhost.de/foo/bar" }
       })
     })
 

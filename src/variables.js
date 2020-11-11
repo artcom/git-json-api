@@ -1,12 +1,15 @@
-module.exports.replaceVariablesWithValues = content => process.env.BACKEND_HOST
-  ? content.replace(/\${backendHost}/g, process.env.BACKEND_HOST)
-  : content
+const variablesToValues = (process.env.GIT_JSON_API_VARIABLES || "")
+  .split(";")
+  .map(entry => entry.split("="))
+  .map(([variable, value]) => [new RegExp(`\\$\{${variable}}`, "g"), value])
 
-module.exports.replaceValuesWithVariables = content => {
-  if (process.env.BACKEND_HOST) {
-    const regExp = new RegExp(process.env.BACKEND_HOST, "g")
-    return JSON.parse(JSON.stringify(content).replace(regExp, "${backendHost}"))
-  } else {
-    return content
-  }
-}
+const valuesToVariables = (process.env.GIT_JSON_API_VARIABLES || "")
+  .split(";")
+  .map(entry => entry.split("="))
+  .map(([variable, value]) => [new RegExp(value, "g"), `$\{${variable}}`])
+
+module.exports.replaceVariablesWithValues = content =>
+  variablesToValues.reduce((result, [regExp, val]) => result.replace(regExp, val), content)
+
+module.exports.replaceValuesWithVariables = content =>
+  valuesToVariables.reduce((result, [regExp, val]) => result.replace(regExp, val), content)
