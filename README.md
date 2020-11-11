@@ -6,12 +6,28 @@ A JSON API to serve the contents of JSON files from a Git repo. All files in the
 
 ### Environment Variables
 
-The service can be configured using these environment variables:
+The service uses the following environment variables:
 
 * `REPO_URI` _(required)_ URI of the Git repository
-* `BACKEND_HOST` _(optional)_ Value of the host variable `${backendHost}` which is replaced on read and write operations to support asset uris in multiple environments.
 * `SIGNATURE_MAIL` _(optional)_ E-mail address used for generated commits
 * `REPO_TOKEN` _(optional)_ Token for accessing private repo
+* `GIT_JSON_API_VARIABLES`_(optional)_ A list of variables to be replaced in the content (see "Variable Replacement" for details)
+
+### Variable Replacement
+
+The service replaces variables in files when serving and writing. All variables need to be listed in the GIT_JSON_API_VARIABLES environment variable as follows:
+```
+export GIT_JSON_API_VARIABLES="variable1=value1;variable2=value2"
+```
+
+If a variable occurs in the content it will be replaced by the given value. When writing to the repo values will also be replaced by their variable name.
+
+**Example**
+```
+Content:                "Hello ${variable}."  
+GIT_JSON_API_VARIABLES: "variable=World"  
+Served:                 "Hello World."
+````
 
 ## API
 
