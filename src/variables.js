@@ -1,12 +1,13 @@
-const variablesToValues = (process.env.GIT_JSON_API_VARIABLES || "")
-  .split(";")
-  .map(entry => entry.split("="))
-  .map(([variable, value]) => [new RegExp(`\\$\{${variable}}`, "g"), value])
+const camelCase = require("lodash.camelcase")
 
-const valuesToVariables = (process.env.GIT_JSON_API_VARIABLES || "")
-  .split(";")
-  .map(entry => entry.split("="))
-  .map(([variable, value]) => [new RegExp(value, "g"), `$\{${variable}}`])
+const variablesToValues = Object.entries(process.env)
+  .filter(([key]) => key.startsWith("GIT_JSON_API_VAR_"))
+  .map(([key, value]) => [new RegExp(`\\$\{${camelCase(key.substr(17))}}`, "g"), value])
+
+
+const valuesToVariables = Object.entries(process.env)
+  .filter(([key]) => key.startsWith("GIT_JSON_API_VAR_"))
+  .map(([key, value]) => [new RegExp(value, "g"), `$\{${camelCase(key.substr(17))}}`])
 
 module.exports.replaceVariablesWithValues = content =>
   variablesToValues.reduce((result, [regExp, val]) => result.replace(regExp, val), content)

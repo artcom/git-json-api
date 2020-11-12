@@ -1,14 +1,13 @@
-process.env.GIT_JSON_API_VARIABLES = "var1=value1;var2=value2;var3=value3"
+process.env.GIT_JSON_API_VAR_MY_VAR1 = "value1"
+process.env.GIT_JSON_API_VAR_MY_VAR2 = "value2"
+process.env.GIT_JSON_API_VAR_VAR3 = "value3"
 
 const { replaceVariablesWithValues, replaceValuesWithVariables } = require("../src/variables")
 
 describe("Variables", () => {
-  beforeAll(async () => {
-  })
-
   test("Replace variables with values", async () => {
     const result = replaceVariablesWithValues(
-      "Test string ${var1}, \"${var1}\",\n${var2} and ${var3}"
+      "Test string ${myVar1}, \"${myVar1}\",\n${myVar2} and ${var3}"
     )
 
     expect(result).toBe(
@@ -22,7 +21,7 @@ describe("Variables", () => {
     )
 
     expect(result).toBe(
-      "Test string ${var1}, \"${var1}\",\n${var2} and ${var3}"
+      "Test string ${myVar1}, \"${myVar1}\",\n${myVar2} and ${var3}"
     )
   })
 })
