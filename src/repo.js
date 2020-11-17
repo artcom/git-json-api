@@ -30,10 +30,16 @@ module.exports = class Repo {
     this.fetchOpts = { callbacks }
   }
 
-  async init() {
+  async init(log) {
     // remove directory and clone new to ensure consistency
+    log.info("Querying git repo data")
     fse.removeSync(this.path)
+    try {
     this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
+    } catch {
+      log.info("Query failed. Retrying...")
+      this.init(log)
+    }
   }
 
   async getData(version, path, listFiles) {
