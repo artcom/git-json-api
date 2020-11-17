@@ -6,7 +6,7 @@ const Cache = require("./cache")
 const Lock = require("./lock")
 
 const NEEDS_FETCH_TIMEOUT = 1000
-const RETRY_DELAY = 10000
+const QUERY_RETRY_DELAY = 10000
 const CONFLICT_REGEXP = /(?:[^\r\n]*\n)?<<<<<<< ours[\s\S]*?>>>>>>> theirs(?:\n[^\r\n]*)?/g
 
 module.exports = class Repo {
@@ -42,8 +42,8 @@ module.exports = class Repo {
           log.info("Git repo data received.")
           return this.repo
         } catch (error) {
-          log.info(`Query failed. Retrying in ${RETRY_DELAY}ms...`, error.message)
-          await delay(RETRY_DELAY)
+          log.info(`Query failed. Retrying in ${QUERY_RETRY_DELAY}ms...`, error.message)
+          await delay(QUERY_RETRY_DELAY)
         }
       }
     }
