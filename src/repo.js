@@ -6,6 +6,7 @@ const Cache = require("./cache")
 const Lock = require("./lock")
 
 const NEEDS_FETCH_TIMEOUT = 1000
+const RETRY_DELAY = 10000
 const CONFLICT_REGEXP = /(?:[^\r\n]*\n)?<<<<<<< ours[\s\S]*?>>>>>>> theirs(?:\n[^\r\n]*)?/g
 
 module.exports = class Repo {
@@ -34,13 +35,18 @@ module.exports = class Repo {
     // remove directory and clone new to ensure consistency
     log.info("Querying git repo data")
     fse.removeSync(this.path)
-    try {
-    this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
-    } catch {
-      log.info("Query failed. Retrying...")
-      this.init(log)
+
+    while (true) {
+      try {
+          this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
+          log.info("Git repo data received.")
+          return this.repo
+        } catch (error) {
+          log.info(`Query failed. Retrying in ${RETRY_DELAY}ms...`, error.message)
+          await delay(RETRY_DELAY)
+        }
+      }
     }
-  }
 
   async getData(version, path, listFiles) {
     try {
@@ -133,6 +139,10 @@ module.exports = class Repo {
       throw error
     }
   }
+}
+
+function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time))
 }
 
 async function getCommitForUpdateBranch(repo, reference) {
