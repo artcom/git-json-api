@@ -33,20 +33,18 @@ module.exports = class Repo {
 
   async init(log) {
     // remove directory and clone new to ensure consistency
-    log.info("Querying git repo data")
     fse.removeSync(this.path)
 
     while (true) {
       try {
-          this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
-          log.info("Git repo data received.")
-          return this.repo
-        } catch (error) {
-          log.info(`Query failed. Retrying in ${QUERY_RETRY_DELAY}ms...`, error.message)
-          await delay(QUERY_RETRY_DELAY)
-        }
+        this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
+        return this.repo
+      } catch (error) {
+        log.info(`Query failed. Retrying in ${QUERY_RETRY_DELAY}ms...`, error.message)
+        await delay(QUERY_RETRY_DELAY)
       }
     }
+  }
 
   async getData(version, path, listFiles) {
     try {

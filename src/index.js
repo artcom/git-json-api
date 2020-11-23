@@ -26,9 +26,9 @@ async function main() {
   const repo = new Repo(repoUri, "./.repo")
 
   log.info({ repoUri: process.env.REPO_URI }, "Try to clone repository...")
-  
+
   await repo.init(log)
-  log.info("Repository successfully cloned.")
+  log.info("Repository cloned")
 
   app.use(express.text({ type: "application/json", limit: process.env.BODY_SIZE_LIMIT || "1mb" }))
   app.use(cors({ exposedHeaders: ["Git-Commit-Hash"] }))
