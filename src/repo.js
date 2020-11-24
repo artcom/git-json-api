@@ -35,6 +35,7 @@ module.exports = class Repo {
     // remove directory and clone new to ensure consistency
     fse.removeSync(this.path)
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         this.repo = await Git.Clone.clone(this.uri, this.path, { fetchOpts: this.fetchOpts })
