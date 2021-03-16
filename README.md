@@ -1,3 +1,9 @@
+# Notice
+
+**The development of this project is continued in https://github.com/artcom/acms-api/tags.**
+
+**For the sake of backwards compatibility this repository is archived and set to read-only.**
+
 # Git JSON API
 
 A JSON API to serve the contents of JSON files from a Git repo. All files in the repo are expected to be JSON files with a `.json` extension.
