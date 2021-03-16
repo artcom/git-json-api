@@ -1,6 +1,6 @@
 # Notice
 
-**The development of this project is continued in https://github.com/artcom/acms-api/tags.**
+**The development of this project is continued in https://github.com/artcom/acms-api.**
 
 **For the sake of backwards compatibility this repository is archived and set to read-only.**
 
